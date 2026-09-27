@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mis Alquileres</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f4f6f9;
+  color: #172033;
+}
+
+.header {
+  background: linear-gradient(135deg, #0757a5, #0b75d1);
+  color: white;
+  padding: 22px 20px 25px;
+  border-radius: 0 0 24px 24px;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon {
+  font-size: 30px;
+}
+
+.logo h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.logo span {
+  font-size: 13px;
+  opacity: .85;
+}
+
+.menu {
+  font-size: 28px;
+}
+
+.container {
+  max-width: 600px;
+  margin: auto;
+  padding: 18px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: -5px;
+}
+
+.stat {
+  background: white;
+  border-radius: 15px;
+  padding: 14px 5px;
+  text-align: center;
+  box-shadow: 0 3px 12px rgba(0,0,0,.07);
+}
+
+.stat strong {
+  display: block;
+  font-size: 22px;
+  color: #0757a5;
+}
+
+.stat span {
+  font-size: 12px;
+  color: #667085;
+}
+
+.section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 22px 2px 12px;
+}
+
+.section-title h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.alerts {
+  background: #fff7f7;
+  border: 1px solid #ffd2d2;
+  border-radius: 18px;
+  padding: 15px;
+}
+
+.alert-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.alert {
+  padding: 10px 0;
+  border-top: 1px solid #eee;
+  font-size: 14px;
+}
+
+.alert:first-of-type {
+  border-top: 0;
+}
+
+.alert small {
+  display: block;
+  color: #777;
+  margin-top: 3px;
+}
+
+.add-button {
+  width: 100%;
+  border: 0;
+  background: #0875d1;
+  color: white;
+  padding: 15px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: bold;
+  margin: 18px 0;
+  cursor: pointer;
+}
+
+.add-button:active {
+  transform: scale(.98);
+}
+
+.property {
+  background: white;
+  border-radius: 16px;
+  padding: 13px;
+  margin-bottom: 11px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 2px 9px rgba(0,0,0,.06);
+  cursor: pointer;
+}
+
+.property-icon {
+  width: 52px;
+  height: 52px;
+  background: #e9f3ff;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 25px;
+}
+
+.property-info {
+  flex: 1;
+}
+
+.property-info strong {
+  display: block;
+  font-size: 15px;
+}
+
+.property-info small {
+  color: #667085;
+  display: block;
+  margin-top: 3px;
+}
+
+.status {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 4px 8px;
+  background: #d9f8e7;
+  color: #16804a;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.property-price {
+  text-align: right;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.property-price small {
+  display: block;
+  color: #777;
+  font-weight: normal;
+}
+
+.bottom-nav {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  padding: 9px 2px 8px;
+  margin: 20px -18px -18px;
+}
+
+.nav-item {
+  text-align: center;
+  color: #667085;
+  font-size: 10px;
+}
+
+.nav-item.active {
+  color: #0875d1;
+  font-weight: bold;
+}
+
+.nav-icon {
+  display: block;
+  font-size: 20px;
+  margin-bottom: 3px;
+}
+
+/* Ventana para agregar propiedad */
+
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 20;
+  padding: 20px;
+}
+
+.modal-content {
+  background: white;
+  max-width: 520px;
+  margin: 40px auto;
+  border-radius: 22px;
+  padding: 22px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 {
+  margin: 0;
+}
+
+.close {
+  border: 0;
+  background: #eee;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+label {
+  display: block;
+  margin-top: 15px;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+input, select {
+  width: 100%;
+  padding: 12px;
+  margin-top: 6px;
+  border: 1px solid #d8dde5;
+  border-radius: 10px;
+  font-size: 15px;
+}
+
+.save-button {
+  width: 100%;
+  margin-top: 20px;
+  border: 0;
+  background: #0875d1;
+  color: white;
+  padding: 14px;
+  border-radius: 11px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.empty {
+  text-align: center;
+  color: #777;
+  padding: 25px;
+}
+
+@media (min-width: 700px) {
+  body {
+    padding: 30px;
+  }
+
+  .container {
+    background: #f4f6f9;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header class="header">
+  <div class="header-top">
+    <div class="logo">
+      <div class="logo-icon">🏠</div>
+      <div>
+        <h1>Mis Alquileres</h1>
+        <span>Gestión de propiedades</span>
+      </div>
+    </div>
+
+    <div class="menu">☰</div>
+  </div>
+</header>
+
+<main class="container">
+
+  <div class="stats">
+    <div class="stat">
+      <strong id="totalPropiedades">3</strong>
+      <span>Propiedades</span>
+    </div>
+
+    <div class="stat">
+      <strong id="totalAlquiladas">2</strong>
+      <span>En alquiler</span>
+    </div>
+
+    <div class="stat">
+      <strong id="totalDisponibles">1</strong>
+      <span>Disponible</span>
+    </div>
+  </div>
+
+  <div class="section-title">
+    <h2>🔔 Alertas</h2>
+    <span style="color:#0875d1;font-size:13px;">Ver todas ›</span>
+  </div>
+
+  <div class="alerts">
+
+    <div class="alert">
+      📅 <strong>2 aumentos próximos</strong>
+      <small>Actualización de alquiler según IPC</small>
+    </div>
+
+    <div class="alert">
+      📄 <strong>1 contrato por vencer</strong>
+      <small>Vence en 45 días</small>
+    </div>
+
+    <div class="alert">
+      ⚠️ <strong>1 pago pendiente</strong>
+      <small>Revisar estado del alquiler</small>
+    </div>
+
+  </div>
+
+  <button class="add-button" onclick="abrirModal()">
+    ＋ Agregar propiedad
+  </button>
+
+  <div class="section-title">
+    <h2>Mis propiedades</h2>
+    <span>🔍</span>
+  </div>
+
+  <div id="listaPropiedades">
+
+    <div class="property">
+      <div class="property-icon">🏢</div>
+
+      <div class="property-info">
+        <strong>Belgrano 450 - 2° B</strong>
+        <small>Quilmes Centro</small>
+        <small>Juan Pérez</small>
+        <span class="status">En alquiler</span>
+      </div>
+
+      <div class="property-price">
+        $450.000
+        <small>Mensual</small>
+      </div>
+    </div>
+
+
+    <div class="property">
+      <div class="property-icon">🏢</div>
+
+      <div class="property-info">
+        <strong>Rivadavia 1250 - 1° A</strong>
+        <small>Quilmes</small>
+        <small>María Gómez</small>
+        <span class="status">En alquiler</span>
+      </div>
+
+      <div class="property-price">
+        $420.000
+        <small>Mensual</small>
+      </div>
+    </div>
+
+
+    <div class="property">
+      <div class="property-icon">🏢</div>
+
+      <div class="property-info">
+        <strong>Mitre 1020 - 1° D</strong>
+        <small>Quilmes</small>
+        <small>Sin inquilino</small>
+        <span class="status" style="background:#e8eef5;color:#536273;">
+          Disponible
+        </span>
+      </div>
+
+      <div class="property-price">
+        —
+        <small>Mensual</small>
+      </div>
+    </div>
+
+  </div>
+
+  <nav class="bottom-nav">
+
+    <div class="nav-item active">
+      <span class="nav-icon">⌂</span>
+      Inicio
+    </div>
+
+    <div class="nav-item">
+      <span class="nav-icon">🏢</span>
+      Propiedades
+    </div>
+
+    <div class="nav-item">
+      <span class="nav-icon">👥</span>
+      Inquilinos
+    </div>
+
+    <div class="nav-item">
+      <span class="nav-icon">🔔</span>
+      Alertas
+    </div>
+
+    <div class="nav-item">
+      <span class="nav-icon">•••</span>
+      Más
+    </div>
+
+  </nav>
+
+</main>
+
+
+<!-- VENTANA AGREGAR PROPIEDAD -->
+
+<div class="modal" id="modal">
+
+  <div class="modal-content">
+
+    <div class="modal-header">
+      <h2>Nueva propiedad</h2>
+
+      <button class="close" onclick="cerrarModal()">×</button>
+    </div>
+
+    <p style="color:#667085;font-size:14px;">
+      Completá los datos básicos de la propiedad.
+    </p>
+
+    <label>Dirección</label>
+    <input id="direccion" placeholder="Ej. Brown 410">
+
+    <label>Número de unidad</label>
+    <input id="unidad" placeholder="Ej. 2° B">
+
+    <label>Localidad</label>
+    <input id="localidad" placeholder="Ej. Quilmes">
+
+    <label>Estado</label>
+    <select id="estado">
+      <option>Disponible</option>
+      <option>En alquiler</option>
+    </select>
+
+    <label>Nombre del inquilino</label>
+    <input id="inquilino" placeholder="Ej. Juan Pérez">
+
+    <label>Alquiler mensual</label>
+    <input id="alquiler" type="number" placeholder="Ej. 450000">
+
+    <button class="save-button" onclick="guardarPropiedad()">
+      Guardar propiedad
+    </button>
+
+  </div>
+
+</div>
+
+
+<script>
+
+function abrirModal() {
+  document.getElementById("modal").style.display = "block";
+}
+
+function cerrarModal() {
+  document.getElementById("modal").style.display = "none";
+}
+
+function guardarPropiedad() {
+
+  const direccion = document.getElementById("direccion").value;
+  const unidad = document.getElementById("unidad").value;
+  const localidad = document.getElementById("localidad").value;
+  const estado = document.getElementById("estado").value;
+  const inquilino = document.getElementById("inquilino").value;
+  const alquiler = document.getElementById("alquiler").value;
+
+  if (!direccion || !unidad || !localidad) {
+    alert("Completá dirección, unidad y localidad.");
+    return;
+  }
+
+  const lista = document.getElementById("listaPropiedades");
+
+  const tarjeta = document.createElement("div");
+
+  tarjeta.className = "property";
+
+  tarjeta.innerHTML = `
+    <div class="property-icon">🏢</div>
+
+    <div class="property-info">
+
+      <strong>${direccion} - ${unidad}</strong>
+
+      <small>${localidad}</small>
+
+      <small>
+        ${inquilino || "Sin inquilino"}
+      </small>
+
+      <span class="status"
+        style="${
+          estado === "Disponible"
+          ? "background:#e8eef5;color:#536273;"
+          : ""
+        }">
+
+        ${estado}
+
+      </span>
+
+    </div>
+
+    <div class="property-price">
+
+      ${
+        alquiler
+        ? "$" + Number(alquiler).toLocaleString("es-AR")
+        : "—"
+      }
+
+      <small>Mensual</small>
+
+    </div>
+  `;
+
+  lista.appendChild(tarjeta);
+
+  actualizarContadores();
+
+  cerrarModal();
+
+  document.getElementById("direccion").value = "";
+  document.getElementById("unidad").value = "";
+  document.getElementById("localidad").value = "";
+  document.getElementById("inquilino").value = "";
+  document.getElementById("alquiler").value = "";
+
+  alert("Propiedad agregada correctamente.");
+}
+
+
+function actualizarContadores() {
+
+  const propiedades =
+    document.querySelectorAll(".property");
+
+  let alquiladas = 0;
+  let disponibles = 0;
+
+  propiedades.forEach(p => {
+
+    const texto = p.innerText;
+
+    if (texto.includes("En alquiler")) {
+      alquiladas++;
+    }
+
+    if (texto.includes("Disponible")) {
+      disponibles++;
+    }
+
+  });
+
+  document.getElementById("totalPropiedades").innerText =
+    propiedades.length;
+
+  document.getElementById("totalAlquiladas").innerText =
+    alquiladas;
+
+  document.getElementById("totalDisponibles").innerText =
+    disponibles;
+}
+
+</script>
+
+</body>
+</html>
