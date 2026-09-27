@@ -481,6 +481,9 @@ onclick="cerrar('modalPropiedad')">×</button>
 <label>Alquiler mensual</label>
 <input id="alquiler" type="number">
 
+<label>Día de vencimiento</label>
+<input id="diaVencimiento" type="number" min="1" max="28" value="5">
+
 <label>Inicio del contrato</label>
 <input id="inicioContrato" type="date">
 
@@ -865,6 +868,9 @@ function obtenerFormulario(){
     alquiler:
     document.getElementById("alquiler").value || null,
 
+    dia_vencimiento:
+    Number(document.getElementById("diaVencimiento").value) || 5,
+
     inicio_contrato:
     document.getElementById("inicioContrato").value || null,
 
@@ -990,6 +996,11 @@ async function abrirDetalle(i){
   }
   </strong>
   </div>
+  
+  <div class="row">
+  <small>Día de vencimiento</small>
+  <strong>Día ${p.dia_vencimiento || 5}</strong>
+  </div>
 
   <div class="row">
   <small>Inicio del contrato</small>
@@ -1061,6 +1072,9 @@ function editarPropiedad(){
 
   document.getElementById("alquiler").value =
   p.alquiler || "";
+
+  document.getElementById("diaVencimiento").value =
+  p.dia_vencimiento || 5;
 
   document.getElementById("inicioContrato").value =
   p.inicio_contrato || "";
