@@ -5,149 +5,571 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mis Alquileres</title>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#f4f6f9;color:#172033}
-.header{background:linear-gradient(135deg,#0757a5,#0b75d1);color:white;padding:22px;border-radius:0 0 24px 24px}
+
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:#f4f6f9;
+  color:#172033;
+}
+
+.header{
+  background:linear-gradient(135deg,#0757a5,#0b75d1);
+  color:white;
+  padding:22px;
+  border-radius:0 0 24px 24px;
+}
+
+.header-inner{
+  max-width:650px;
+  margin:auto;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
 .header h1{margin:0;font-size:22px}
 .header small{opacity:.85}
-.container{max-width:650px;margin:auto;padding:18px}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.stat{background:white;border-radius:15px;padding:14px 5px;text-align:center;box-shadow:0 3px 12px #00000012}
-.stat strong{display:block;font-size:22px;color:#0757a5}
-.stat span{font-size:12px;color:#667085}
+
+.container{
+  max-width:650px;
+  margin:auto;
+  padding:18px;
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+}
+
+.stat{
+  background:white;
+  border-radius:15px;
+  padding:14px 5px;
+  text-align:center;
+  box-shadow:0 3px 12px #00000012;
+}
+
+.stat strong{
+  display:block;
+  font-size:22px;
+  color:#0757a5;
+}
+
+.stat span{
+  font-size:12px;
+  color:#667085;
+}
+
 h2{font-size:18px}
-.alerts{background:#fff7f7;border:1px solid #ffd2d2;border-radius:18px;padding:15px}
-.alert{padding:9px 0;border-bottom:1px solid #eee;font-size:14px}
+
+.alerts{
+  background:#fff7f7;
+  border:1px solid #ffd2d2;
+  border-radius:18px;
+  padding:15px;
+}
+
+.alert{
+  padding:9px 0;
+  border-bottom:1px solid #eee;
+  font-size:14px;
+}
+
 .alert:last-child{border:0}
+
 button{cursor:pointer}
-.primary{width:100%;border:0;background:#0875d1;color:white;padding:14px;border-radius:11px;font-size:15px;font-weight:bold;margin:15px 0}
-.secondary{width:100%;border:1px solid #0875d1;background:white;color:#0875d1;padding:12px;border-radius:10px;font-weight:bold;margin-top:10px}
-.property{background:white;border-radius:16px;padding:14px;margin-bottom:11px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 9px #0000000f;cursor:pointer}
-.icon{width:52px;height:52px;background:#e9f3ff;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:25px}
+
+.primary{
+  width:100%;
+  border:0;
+  background:#0875d1;
+  color:white;
+  padding:14px;
+  border-radius:11px;
+  font-size:15px;
+  font-weight:bold;
+  margin:15px 0;
+}
+
+.secondary{
+  width:100%;
+  border:1px solid #0875d1;
+  background:white;
+  color:#0875d1;
+  padding:12px;
+  border-radius:10px;
+  font-weight:bold;
+  margin-top:10px;
+}
+
+.logout{
+  background:rgba(255,255,255,.16);
+  color:white;
+  border:1px solid rgba(255,255,255,.4);
+  padding:8px 12px;
+  border-radius:9px;
+}
+
+.property{
+  background:white;
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:11px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  box-shadow:0 2px 9px #0000000f;
+  cursor:pointer;
+}
+
+.icon{
+  width:52px;
+  height:52px;
+  background:#e9f3ff;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:25px;
+}
+
 .info{flex:1}
+
 .info strong,.info small{display:block}
-.info small{color:#667085;margin-top:3px}
-.status{display:inline-block;margin-top:6px;padding:4px 8px;background:#d9f8e7;color:#16804a;border-radius:20px;font-size:11px;font-weight:bold}
-.price{font-weight:bold;text-align:right}
-.modal{display:none;position:fixed;inset:0;background:#0008;padding:15px;z-index:100;overflow:auto}
-.box{background:white;max-width:550px;margin:20px auto;padding:22px;border-radius:22px}
-.modal-head{display:flex;justify-content:space-between;align-items:center}
-.close{border:0;width:36px;height:36px;border-radius:50%;font-size:20px}
-label{display:block;margin-top:13px;font-size:13px;font-weight:bold}
-input,select{width:100%;padding:12px;margin-top:5px;border:1px solid #d8dde5;border-radius:10px;font-size:15px}
-.row{padding:11px 0;border-bottom:1px solid #eee}
-.row small{display:block;color:#667085;margin-bottom:4px}
-.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:15px}
-.actions button{border:0;padding:12px;border-radius:10px;font-weight:bold}
+
+.info small{
+  color:#667085;
+  margin-top:3px;
+}
+
+.status{
+  display:inline-block;
+  margin-top:6px;
+  padding:4px 8px;
+  background:#d9f8e7;
+  color:#16804a;
+  border-radius:20px;
+  font-size:11px;
+  font-weight:bold;
+}
+
+.price{
+  font-weight:bold;
+  text-align:right;
+}
+
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:#0008;
+  padding:15px;
+  z-index:100;
+  overflow:auto;
+}
+
+.box{
+  background:white;
+  max-width:550px;
+  margin:20px auto;
+  padding:22px;
+  border-radius:22px;
+}
+
+.modal-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.close{
+  border:0;
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  font-size:20px;
+}
+
+label{
+  display:block;
+  margin-top:13px;
+  font-size:13px;
+  font-weight:bold;
+}
+
+input,select{
+  width:100%;
+  padding:12px;
+  margin-top:5px;
+  border:1px solid #d8dde5;
+  border-radius:10px;
+  font-size:15px;
+}
+
+.row{
+  padding:11px 0;
+  border-bottom:1px solid #eee;
+}
+
+.row small{
+  display:block;
+  color:#667085;
+  margin-bottom:4px;
+}
+
+.actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+  margin-top:15px;
+}
+
+.actions button{
+  border:0;
+  padding:12px;
+  border-radius:10px;
+  font-weight:bold;
+}
+
 .blue{background:#0875d1;color:white}
 .grey{background:#edf0f4;color:#344054}
-.green{background:#daf8e7;color:#157347}
 .red{background:#fff0f0;color:#c62828}
-.payment{background:#f7f9fc;border-radius:12px;padding:12px;margin:9px 0}
-.payment-top{display:flex;justify-content:space-between;gap:10px}
+
+.payment{
+  background:#f7f9fc;
+  border-radius:12px;
+  padding:12px;
+  margin:9px 0;
+}
+
+.payment-top{
+  display:flex;
+  justify-content:space-between;
+}
+
 .paid{color:#16804a;font-weight:bold}
 .pending{color:#d92d20;font-weight:bold}
-.empty{text-align:center;padding:25px;color:#667085}
+
+.empty{
+  text-align:center;
+  padding:25px;
+  color:#667085;
+}
+
+/* LOGIN */
+
+#loginScreen{
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:20px;
+  background:#f4f6f9;
+}
+
+.login-card{
+  background:white;
+  width:100%;
+  max-width:400px;
+  border-radius:24px;
+  padding:30px;
+  box-shadow:0 12px 40px rgba(0,0,0,.10);
+}
+
+.login-logo{
+  text-align:center;
+  margin-bottom:25px;
+}
+
+.login-logo .house{
+  font-size:48px;
+}
+
+.login-logo h1{
+  margin:8px 0 4px;
+  color:#0757a5;
+}
+
+.login-logo p{
+  margin:0;
+  color:#667085;
+}
+
+.login-error{
+  display:none;
+  background:#fff0f0;
+  color:#c62828;
+  padding:10px;
+  border-radius:9px;
+  margin-top:12px;
+  font-size:13px;
+}
+
+#app{display:none}
+
+.loading{
+  text-align:center;
+  padding:30px;
+  color:#667085;
+}
+
+.user-email{
+  font-size:11px;
+  opacity:.9;
+  margin-top:3px;
+}
+
+@media(max-width:500px){
+  .price{font-size:13px}
+}
 </style>
 </head>
 
 <body>
 
+<!-- LOGIN -->
+
+<div id="loginScreen">
+
+  <div class="login-card">
+
+    <div class="login-logo">
+      <div class="house">🏠</div>
+      <h1>Mis Alquileres</h1>
+      <p>Gestión de propiedades</p>
+    </div>
+
+    <label>Email</label>
+    <input id="loginEmail" type="email"
+           placeholder="tu@email.com">
+
+    <label>Contraseña</label>
+    <input id="loginPassword" type="password"
+           placeholder="Contraseña"
+           onkeydown="if(event.key==='Enter') iniciarSesion()">
+
+    <button class="primary" onclick="iniciarSesion()">
+      🔐 Iniciar sesión
+    </button>
+
+    <div id="loginError" class="login-error"></div>
+
+  </div>
+
+</div>
+
+
+<!-- APLICACIÓN -->
+
+<div id="app">
+
 <header class="header">
+
+<div class="header-inner">
+
+<div>
 <h1>🏠 Mis Alquileres</h1>
 <small>Gestión de propiedades</small>
+<div class="user-email" id="usuarioActual"></div>
+</div>
+
+<button class="logout" onclick="cerrarSesion()">
+Salir
+</button>
+
+</div>
+
 </header>
 
 <main class="container">
 
 <div class="stats">
-<div class="stat"><strong id="total">0</strong><span>Propiedades</span></div>
-<div class="stat"><strong id="alquiladas">0</strong><span>En alquiler</span></div>
-<div class="stat"><strong id="pendientes">0</strong><span>Pagos pendientes</span></div>
+
+<div class="stat">
+<strong id="total">0</strong>
+<span>Propiedades</span>
+</div>
+
+<div class="stat">
+<strong id="alquiladas">0</strong>
+<span>En alquiler</span>
+</div>
+
+<div class="stat">
+<strong id="pendientes">0</strong>
+<span>Pagos pendientes</span>
+</div>
+
 </div>
 
 <h2>🔔 Alertas</h2>
+
 <div class="alerts">
-<div class="alert">📈 Revisar próximos aumentos por IPC</div>
-<div class="alert">📄 Revisar contratos próximos a vencer</div>
-<div class="alert" id="alertaPagos">💰 Sin pagos pendientes</div>
+
+<div class="alert">
+📈 Próximos aumentos por IPC
 </div>
 
-<button class="primary" onclick="nuevaPropiedad()">＋ Agregar propiedad</button>
+<div class="alert">
+📄 Contratos próximos a vencer
+</div>
+
+<div class="alert" id="alertaPagos">
+💰 Sin pagos pendientes
+</div>
+
+</div>
+
+<button class="primary" onclick="nuevaPropiedad()">
+＋ Agregar propiedad
+</button>
 
 <h2>Mis propiedades</h2>
-<div id="lista"></div>
+
+<div id="lista">
+<div class="loading">Cargando propiedades...</div>
+</div>
 
 </main>
 
-<!-- PROPIEDAD -->
-<div class="modal" id="modalPropiedad">
-<div class="box">
-<div class="modal-head">
-<h2 id="tituloFormulario">Nueva propiedad</h2>
-<button class="close" onclick="cerrar('modalPropiedad')">×</button>
 </div>
 
-<label>Dirección</label><input id="direccion">
-<label>Unidad / Piso</label><input id="unidad">
-<label>Localidad</label><input id="localidad">
+
+<!-- PROPIEDAD -->
+
+<div class="modal" id="modalPropiedad">
+
+<div class="box">
+
+<div class="modal-head">
+<h2 id="tituloFormulario">Nueva propiedad</h2>
+<button class="close"
+onclick="cerrar('modalPropiedad')">×</button>
+</div>
+
+<label>Dirección</label>
+<input id="direccion">
+
+<label>Unidad / Piso</label>
+<input id="unidad">
+
+<label>Localidad</label>
+<input id="localidad">
 
 <label>Estado</label>
+
 <select id="estado">
 <option>En alquiler</option>
 <option>Disponible</option>
 </select>
 
-<label>Inquilino</label><input id="inquilino">
-<label>Teléfono</label><input id="telefono">
-<label>Email</label><input id="email" type="email">
-<label>Alquiler mensual</label><input id="alquiler" type="number">
-<label>Inicio del contrato</label><input id="inicioContrato" type="date">
-<label>Fin del contrato</label><input id="finContrato" type="date">
-<label>Próximo aumento</label><input id="proximoAumento" type="date">
-<label>N° cliente Edesur</label><input id="edesur">
-<label>N° cliente MetroGAS</label><input id="metrogas">
+<label>Inquilino</label>
+<input id="inquilino">
 
-<button class="primary" onclick="guardarPropiedad()">Guardar propiedad</button>
+<label>Teléfono</label>
+<input id="telefono">
+
+<label>Email</label>
+<input id="email" type="email">
+
+<label>Alquiler mensual</label>
+<input id="alquiler" type="number">
+
+<label>Inicio del contrato</label>
+<input id="inicioContrato" type="date">
+
+<label>Fin del contrato</label>
+<input id="finContrato" type="date">
+
+<label>Próximo aumento</label>
+<input id="proximoAumento" type="date">
+
+<label>N° cliente Edesur</label>
+<input id="edesur">
+
+<label>N° cliente MetroGAS</label>
+<input id="metrogas">
+
+<button class="primary" onclick="guardarPropiedad()">
+Guardar propiedad
+</button>
+
 </div>
 </div>
+
 
 <!-- DETALLE -->
+
 <div class="modal" id="modalDetalle">
+
 <div class="box">
+
 <div class="modal-head">
 <h2>Detalle de propiedad</h2>
-<button class="close" onclick="cerrar('modalDetalle')">×</button>
+<button class="close"
+onclick="cerrar('modalDetalle')">×</button>
 </div>
 
 <div id="detalle"></div>
 
-<button class="secondary" onclick="editarPropiedad()">✏️ Editar propiedad</button>
-<button class="primary" onclick="abrirPago()">＋ Registrar pago</button>
+<button class="secondary" onclick="editarPropiedad()">
+✏️ Editar propiedad
+</button>
+
+<button class="primary" onclick="abrirPago()">
+＋ Registrar pago
+</button>
 
 <h2>Historial de pagos</h2>
+
 <div id="historial"></div>
 
 <div class="actions">
-<button class="blue" onclick="facturacion(true)">🧾 Facturar</button>
-<button class="grey" onclick="facturacion(false)">No facturar</button>
+
+<button class="blue" onclick="facturacion(true)">
+🧾 Facturar
+</button>
+
+<button class="grey" onclick="facturacion(false)">
+No facturar
+</button>
+
 </div>
 
 <div class="actions">
-<button class="red" onclick="eliminarPropiedad()">Eliminar propiedad</button>
-<button class="grey" onclick="cerrar('modalDetalle')">Cerrar</button>
+
+<button class="red" onclick="eliminarPropiedad()">
+Eliminar propiedad
+</button>
+
+<button class="grey" onclick="cerrar('modalDetalle')">
+Cerrar
+</button>
+
 </div>
 
 </div>
 </div>
+
 
 <!-- PAGO -->
+
 <div class="modal" id="modalPago">
+
 <div class="box">
+
 <div class="modal-head">
 <h2>Registrar pago</h2>
-<button class="close" onclick="cerrar('modalPago')">×</button>
+
+<button class="close"
+onclick="cerrar('modalPago')">×</button>
+
 </div>
 
 <label>Mes</label>
@@ -160,245 +582,819 @@ input,select{width:100%;padding:12px;margin-top:5px;border:1px solid #d8dde5;bor
 <input id="fechaPago" type="date">
 
 <label>Estado</label>
+
 <select id="estadoPago">
 <option>Pagado</option>
 <option>Pendiente</option>
 </select>
 
-<button class="primary" onclick="guardarPago()">Guardar pago</button>
+<button class="primary" onclick="guardarPago()">
+Guardar pago
+</button>
+
 </div>
 </div>
+
 
 <script>
 
-let propiedades=JSON.parse(localStorage.getItem("misAlquileresPropiedades"))||[];
-let seleccion=null;
-let editando=null;
+/* ==============================
+   CONEXIÓN SUPABASE
+================================ */
 
-propiedades.forEach(p=>{
- if(!p.pagos) p.pagos=[];
-});
+const SUPABASE_URL =
+"https://bswlfpxmdwhplsjytcez.supabase.co";
 
-function guardar(){
- localStorage.setItem("misAlquileresPropiedades",JSON.stringify(propiedades));
+const SUPABASE_KEY =
+"sb_publishable_0fb-OarBN7z9nMuteJXeVg_RZrTp1Yp";
+
+const db = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+let propiedades = [];
+let seleccion = null;
+let editando = null;
+let usuario = null;
+
+
+/* ==============================
+   LOGIN
+================================ */
+
+async function iniciarSesion(){
+
+  const email =
+  document.getElementById("loginEmail").value.trim();
+
+  const password =
+  document.getElementById("loginPassword").value;
+
+  const errorBox =
+  document.getElementById("loginError");
+
+  errorBox.style.display="none";
+
+  if(!email || !password){
+    mostrarErrorLogin("Ingresá email y contraseña.");
+    return;
+  }
+
+  const {data,error} =
+  await db.auth.signInWithPassword({
+    email:email,
+    password:password
+  });
+
+  if(error){
+    mostrarErrorLogin(
+      "No se pudo iniciar sesión. Revisá el email y la contraseña."
+    );
+    return;
+  }
+
+  usuario=data.user;
+
+  mostrarAplicacion();
+
+  await cargarPropiedades();
 }
 
-function abrir(id){document.getElementById(id).style.display="block"}
-function cerrar(id){document.getElementById(id).style.display="none"}
+
+function mostrarErrorLogin(texto){
+
+  const e=document.getElementById("loginError");
+
+  e.innerText=texto;
+  e.style.display="block";
+
+}
+
+
+async function cerrarSesion(){
+
+  await db.auth.signOut();
+
+  usuario=null;
+  propiedades=[];
+
+  document.getElementById("app").style.display="none";
+  document.getElementById("loginScreen").style.display="flex";
+
+  document.getElementById("loginPassword").value="";
+
+}
+
+
+function mostrarAplicacion(){
+
+  document.getElementById("loginScreen").style.display="none";
+  document.getElementById("app").style.display="block";
+
+  document.getElementById("usuarioActual").innerText =
+  usuario?.email || "";
+
+}
+
+
+/* ==============================
+   CARGAR DATOS
+================================ */
+
+async function cargarPropiedades(){
+
+  document.getElementById("lista").innerHTML =
+  '<div class="loading">Cargando propiedades...</div>';
+
+  const {data,error} =
+  await db
+  .from("propiedades")
+  .select("*")
+  .order("created_at",{ascending:false});
+
+  if(error){
+
+    console.error(error);
+
+    document.getElementById("lista").innerHTML =
+    '<div class="empty">No se pudieron cargar las propiedades.</div>';
+
+    return;
+  }
+
+  propiedades=data || [];
+
+  mostrarPropiedades();
+
+  await actualizarPagosPendientes();
+
+}
+
+
+/* ==============================
+   MOSTRAR PROPIEDADES
+================================ */
+
+function mostrarPropiedades(){
+
+  const lista=document.getElementById("lista");
+
+  lista.innerHTML="";
+
+  if(!propiedades.length){
+
+    lista.innerHTML =
+    '<div class="empty">Todavía no hay propiedades.<br>Agregá la primera.</div>';
+
+  }
+
+  propiedades.forEach((p,i)=>{
+
+    const tarjeta=document.createElement("div");
+
+    tarjeta.className="property";
+
+    tarjeta.innerHTML=`
+
+    <div class="icon">🏢</div>
+
+    <div class="info">
+
+      <strong>
+      ${esc(p.direccion)}
+      ${p.unidad ? "- "+esc(p.unidad) : ""}
+      </strong>
+
+      <small>${esc(p.localidad)}</small>
+
+      <small>
+      ${esc(p.inquilino || "Sin inquilino")}
+      </small>
+
+      <span class="status">
+      ${esc(p.estado)}
+      </span>
+
+    </div>
+
+    <div class="price">
+
+      ${
+        p.alquiler
+        ? "$"+Number(p.alquiler).toLocaleString("es-AR")
+        : "—"
+      }
+
+    </div>
+
+    `;
+
+    tarjeta.onclick=()=>abrirDetalle(i);
+
+    lista.appendChild(tarjeta);
+
+  });
+
+  document.getElementById("total").innerText =
+  propiedades.length;
+
+  document.getElementById("alquiladas").innerText =
+  propiedades.filter(
+    p=>p.estado==="En alquiler"
+  ).length;
+
+}
+
+
+/* ==============================
+   NUEVA / EDITAR PROPIEDAD
+================================ */
 
 function nuevaPropiedad(){
- editando=null;
- limpiar();
- document.getElementById("tituloFormulario").innerText="Nueva propiedad";
- abrir("modalPropiedad");
+
+  editando=null;
+
+  limpiarFormulario();
+
+  document.getElementById("tituloFormulario").innerText =
+  "Nueva propiedad";
+
+  abrir("modalPropiedad");
+
 }
 
-function limpiar(){
- document.querySelectorAll("#modalPropiedad input").forEach(x=>x.value="");
- document.getElementById("estado").value="En alquiler";
+
+function limpiarFormulario(){
+
+  document
+  .querySelectorAll("#modalPropiedad input")
+  .forEach(x=>x.value="");
+
+  document.getElementById("estado").value =
+  "En alquiler";
+
 }
 
-function datosFormulario(){
- return{
- direccion:direccion.value.trim(),
- unidad:unidad.value.trim(),
- localidad:localidad.value.trim(),
- estado:estado.value,
- inquilino:inquilino.value.trim(),
- telefono:telefono.value.trim(),
- email:email.value.trim(),
- alquiler:alquiler.value,
- inicioContrato:inicioContrato.value,
- finContrato:finContrato.value,
- proximoAumento:proximoAumento.value,
- edesur:edesur.value.trim(),
- metrogas:metrogas.value.trim()
- };
+
+function obtenerFormulario(){
+
+  return {
+
+    direccion:
+    document.getElementById("direccion").value.trim(),
+
+    unidad:
+    document.getElementById("unidad").value.trim(),
+
+    localidad:
+    document.getElementById("localidad").value.trim(),
+
+    estado:
+    document.getElementById("estado").value,
+
+    inquilino:
+    document.getElementById("inquilino").value.trim(),
+
+    telefono:
+    document.getElementById("telefono").value.trim(),
+
+    email:
+    document.getElementById("email").value.trim(),
+
+    alquiler:
+    document.getElementById("alquiler").value || null,
+
+    inicio_contrato:
+    document.getElementById("inicioContrato").value || null,
+
+    fin_contrato:
+    document.getElementById("finContrato").value || null,
+
+    proximo_aumento:
+    document.getElementById("proximoAumento").value || null,
+
+    edesur:
+    document.getElementById("edesur").value.trim(),
+
+    metrogas:
+    document.getElementById("metrogas").value.trim()
+
+  };
+
 }
 
-function guardarPropiedad(){
- const d=datosFormulario();
 
- if(!d.direccion||!d.localidad){
-   alert("Completá dirección y localidad.");
-   return;
- }
+async function guardarPropiedad(){
 
- if(editando===null){
-   d.facturar=false;
-   d.pagos=[];
-   propiedades.push(d);
- }else{
-   d.facturar=propiedades[editando].facturar||false;
-   d.pagos=propiedades[editando].pagos||[];
-   propiedades[editando]=d;
- }
+  const p=obtenerFormulario();
 
- guardar();
- cerrar("modalPropiedad");
- mostrar();
+  if(!p.direccion || !p.localidad){
 
- if(editando!==null){
-   seleccion=editando;
-   abrirDetalle(seleccion);
- }
+    alert("Completá dirección y localidad.");
+
+    return;
+
+  }
+
+  let resultado;
+
+  if(editando===null){
+
+    resultado =
+    await db
+    .from("propiedades")
+    .insert(p);
+
+  }else{
+
+    resultado =
+    await db
+    .from("propiedades")
+    .update(p)
+    .eq("id",propiedades[editando].id);
+
+  }
+
+  if(resultado.error){
+
+    console.error(resultado.error);
+
+    alert(
+      "No se pudo guardar la propiedad: "+
+      resultado.error.message
+    );
+
+    return;
+  }
+
+  cerrar("modalPropiedad");
+
+  await cargarPropiedades();
+
 }
 
-function mostrar(){
- lista.innerHTML="";
 
- if(!propiedades.length){
-   lista.innerHTML='<div class="empty">Todavía no hay propiedades.</div>';
- }
+/* ==============================
+   DETALLE
+================================ */
 
- propiedades.forEach((p,i)=>{
-   const e=document.createElement("div");
-   e.className="property";
+async function abrirDetalle(i){
 
-   e.innerHTML=`
-   <div class="icon">🏢</div>
-   <div class="info">
-   <strong>${esc(p.direccion)} ${p.unidad?"- "+esc(p.unidad):""}</strong>
-   <small>${esc(p.localidad)}</small>
-   <small>${esc(p.inquilino||"Sin inquilino")}</small>
-   <span class="status">${esc(p.estado)}</span>
-   </div>
-   <div class="price">${p.alquiler?"$"+Number(p.alquiler).toLocaleString("es-AR"):"—"}</div>
-   `;
+  seleccion=i;
 
-   e.onclick=()=>abrirDetalle(i);
-   lista.appendChild(e);
- });
+  const p=propiedades[i];
 
- actualizar();
+  document.getElementById("detalle").innerHTML=`
+
+  <div class="row">
+  <small>Propiedad</small>
+  <strong>
+  ${esc(p.direccion)}
+  ${p.unidad ? "- "+esc(p.unidad) : ""}
+  </strong>
+  </div>
+
+  <div class="row">
+  <small>Localidad</small>
+  <strong>${esc(p.localidad)}</strong>
+  </div>
+
+  <div class="row">
+  <small>Estado</small>
+  <strong>${esc(p.estado)}</strong>
+  </div>
+
+  <div class="row">
+  <small>Inquilino</small>
+  <strong>${esc(p.inquilino || "—")}</strong>
+  </div>
+
+  <div class="row">
+  <small>Teléfono</small>
+  <strong>${esc(p.telefono || "—")}</strong>
+  </div>
+
+  <div class="row">
+  <small>Email</small>
+  <strong>${esc(p.email || "—")}</strong>
+  </div>
+
+  <div class="row">
+  <small>Alquiler mensual</small>
+  <strong>
+  ${
+    p.alquiler
+    ? "$"+Number(p.alquiler).toLocaleString("es-AR")
+    : "—"
+  }
+  </strong>
+  </div>
+
+  <div class="row">
+  <small>Inicio del contrato</small>
+  <strong>${esc(p.inicio_contrato || "—")}</strong>
+  </div>
+
+  <div class="row">
+  <small>Fin del contrato</small>
+  <strong>${esc(p.fin_contrato || "—")}</strong>
+  </div>
+
+  <div class="row">
+  <small>Próximo aumento</small>
+  <strong>${esc(p.proximo_aumento || "—")}</strong>
+  </div>
+
+  <div class="row">
+  <small>Edesur</small>
+  <strong>${esc(p.edesur || "—")}</strong>
+  </div>
+
+  <div class="row">
+  <small>MetroGAS</small>
+  <strong>${esc(p.metrogas || "—")}</strong>
+  </div>
+
+  <div class="row">
+  <small>Facturación</small>
+  <strong>
+  ${p.facturar ? "🧾 Facturar" : "No facturar"}
+  </strong>
+  </div>
+
+  `;
+
+  abrir("modalDetalle");
+
+  await mostrarPagos();
+
 }
 
-function abrirDetalle(i){
- seleccion=i;
- const p=propiedades[i];
-
- detalle.innerHTML=`
- <div class="row"><small>Propiedad</small><strong>${esc(p.direccion)} ${p.unidad?"- "+esc(p.unidad):""}</strong></div>
- <div class="row"><small>Localidad</small><strong>${esc(p.localidad)}</strong></div>
- <div class="row"><small>Estado</small><strong>${esc(p.estado)}</strong></div>
- <div class="row"><small>Inquilino</small><strong>${esc(p.inquilino||"—")}</strong></div>
- <div class="row"><small>Teléfono</small><strong>${esc(p.telefono||"—")}</strong></div>
- <div class="row"><small>Email</small><strong>${esc(p.email||"—")}</strong></div>
- <div class="row"><small>Alquiler</small><strong>${p.alquiler?"$"+Number(p.alquiler).toLocaleString("es-AR"):"—"}</strong></div>
- <div class="row"><small>Contrato</small><strong>${esc(p.inicioContrato||"—")} → ${esc(p.finContrato||"—")}</strong></div>
- <div class="row"><small>Próximo aumento</small><strong>${esc(p.proximoAumento||"—")}</strong></div>
- <div class="row"><small>Edesur</small><strong>${esc(p.edesur||"—")}</strong></div>
- <div class="row"><small>MetroGAS</small><strong>${esc(p.metrogas||"—")}</strong></div>
- <div class="row"><small>Facturación</small><strong>${p.facturar?"🧾 Facturar":"No facturar"}</strong></div>
- `;
-
- mostrarPagos();
- abrir("modalDetalle");
-}
 
 function editarPropiedad(){
- const p=propiedades[seleccion];
- editando=seleccion;
 
- ["direccion","unidad","localidad","estado","inquilino","telefono","email",
- "alquiler","inicioContrato","finContrato","proximoAumento","edesur","metrogas"]
- .forEach(k=>document.getElementById(k).value=p[k]||"");
+  const p=propiedades[seleccion];
 
- document.getElementById("tituloFormulario").innerText="Editar propiedad";
- cerrar("modalDetalle");
- abrir("modalPropiedad");
+  editando=seleccion;
+
+  document.getElementById("direccion").value =
+  p.direccion || "";
+
+  document.getElementById("unidad").value =
+  p.unidad || "";
+
+  document.getElementById("localidad").value =
+  p.localidad || "";
+
+  document.getElementById("estado").value =
+  p.estado || "En alquiler";
+
+  document.getElementById("inquilino").value =
+  p.inquilino || "";
+
+  document.getElementById("telefono").value =
+  p.telefono || "";
+
+  document.getElementById("email").value =
+  p.email || "";
+
+  document.getElementById("alquiler").value =
+  p.alquiler || "";
+
+  document.getElementById("inicioContrato").value =
+  p.inicio_contrato || "";
+
+  document.getElementById("finContrato").value =
+  p.fin_contrato || "";
+
+  document.getElementById("proximoAumento").value =
+  p.proximo_aumento || "";
+
+  document.getElementById("edesur").value =
+  p.edesur || "";
+
+  document.getElementById("metrogas").value =
+  p.metrogas || "";
+
+  document.getElementById("tituloFormulario").innerText =
+  "Editar propiedad";
+
+  cerrar("modalDetalle");
+
+  abrir("modalPropiedad");
+
 }
+
+
+/* ==============================
+   PAGOS
+================================ */
 
 function abrirPago(){
- mesPago.value="";
- importePago.value=propiedades[seleccion].alquiler||"";
- fechaPago.value="";
- estadoPago.value="Pagado";
- abrir("modalPago");
+
+  const p=propiedades[seleccion];
+
+  document.getElementById("mesPago").value="";
+
+  document.getElementById("importePago").value =
+  p.alquiler || "";
+
+  document.getElementById("fechaPago").value="";
+
+  document.getElementById("estadoPago").value =
+  "Pagado";
+
+  abrir("modalPago");
+
 }
 
-function guardarPago(){
- if(!mesPago.value||!importePago.value){
-   alert("Completá el mes y el importe.");
-   return;
- }
 
- propiedades[seleccion].pagos.push({
-   mes:mesPago.value,
-   importe:importePago.value,
-   fecha:fechaPago.value,
-   estado:estadoPago.value
- });
+async function guardarPago(){
 
- guardar();
- cerrar("modalPago");
- mostrarPagos();
- mostrar();
+  const p=propiedades[seleccion];
+
+  const mes =
+  document.getElementById("mesPago").value;
+
+  const importe =
+  document.getElementById("importePago").value;
+
+  if(!mes || !importe){
+
+    alert("Completá mes e importe.");
+
+    return;
+
+  }
+
+  const {error} =
+  await db
+  .from("pagos")
+  .insert({
+
+    propiedad_id:p.id,
+
+    mes:mes,
+
+    importe:importe,
+
+    fecha_pago:
+    document.getElementById("fechaPago").value || null,
+
+    estado:
+    document.getElementById("estadoPago").value
+
+  });
+
+  if(error){
+
+    console.error(error);
+
+    alert(
+      "No se pudo guardar el pago: "+
+      error.message
+    );
+
+    return;
+
+  }
+
+  cerrar("modalPago");
+
+  await mostrarPagos();
+
+  await actualizarPagosPendientes();
+
 }
 
-function mostrarPagos(){
- const pagos=propiedades[seleccion].pagos||[];
- historial.innerHTML="";
 
- if(!pagos.length){
-   historial.innerHTML='<div class="empty">Todavía no hay pagos registrados.</div>';
-   return;
- }
+async function mostrarPagos(){
 
- [...pagos].reverse().forEach(p=>{
-   historial.innerHTML+=`
-   <div class="payment">
-   <div class="payment-top">
-   <strong>${esc(p.mes)}</strong>
-   <span class="${p.estado==="Pagado"?"paid":"pending"}">${esc(p.estado)}</span>
-   </div>
-   <div>$${Number(p.importe).toLocaleString("es-AR")}</div>
-   <small>${p.fecha?"Fecha: "+esc(p.fecha):"Sin fecha registrada"}</small>
-   </div>`;
- });
+  const p=propiedades[seleccion];
+
+  const historial =
+  document.getElementById("historial");
+
+  historial.innerHTML =
+  '<div class="loading">Cargando...</div>';
+
+  const {data,error} =
+  await db
+  .from("pagos")
+  .select("*")
+  .eq("propiedad_id",p.id)
+  .order("created_at",{ascending:false});
+
+  if(error){
+
+    historial.innerHTML =
+    '<div class="empty">No se pudieron cargar los pagos.</div>';
+
+    return;
+
+  }
+
+  historial.innerHTML="";
+
+  if(!data.length){
+
+    historial.innerHTML =
+    '<div class="empty">Todavía no hay pagos registrados.</div>';
+
+    return;
+
+  }
+
+  data.forEach(x=>{
+
+    historial.innerHTML+=`
+
+    <div class="payment">
+
+      <div class="payment-top">
+
+        <strong>${esc(x.mes)}</strong>
+
+        <span class="${
+          x.estado==="Pagado"
+          ? "paid"
+          : "pending"
+        }">
+
+        ${esc(x.estado)}
+
+        </span>
+
+      </div>
+
+      <div>
+      $${Number(x.importe).toLocaleString("es-AR")}
+      </div>
+
+      <small>
+      ${
+        x.fecha_pago
+        ? "Fecha: "+esc(x.fecha_pago)
+        : "Sin fecha registrada"
+      }
+      </small>
+
+    </div>
+
+    `;
+
+  });
+
 }
 
-function facturacion(valor){
- propiedades[seleccion].facturar=valor;
- guardar();
- abrirDetalle(seleccion);
+
+async function actualizarPagosPendientes(){
+
+  const {data,error} =
+  await db
+  .from("pagos")
+  .select("id")
+  .eq("estado","Pendiente");
+
+  if(error) return;
+
+  const cantidad=data.length;
+
+  document.getElementById("pendientes").innerText =
+  cantidad;
+
+  document.getElementById("alertaPagos").innerText =
+  cantidad
+  ? `💰 ${cantidad} pago${cantidad===1?"":"s"} pendiente${cantidad===1?"":"s"}`
+  : "💰 Sin pagos pendientes";
+
 }
 
-function eliminarPropiedad(){
- if(!confirm("¿Seguro que querés eliminar esta propiedad?"))return;
- propiedades.splice(seleccion,1);
- guardar();
- seleccion=null;
- cerrar("modalDetalle");
- mostrar();
+
+/* ==============================
+   FACTURACIÓN
+================================ */
+
+async function facturacion(valor){
+
+  const p=propiedades[seleccion];
+
+  const {error} =
+  await db
+  .from("propiedades")
+  .update({facturar:valor})
+  .eq("id",p.id);
+
+  if(error){
+
+    alert("No se pudo actualizar.");
+
+    return;
+
+  }
+
+  propiedades[seleccion].facturar=valor;
+
+  await abrirDetalle(seleccion);
+
 }
 
-function actualizar(){
- total.innerText=propiedades.length;
- alquiladas.innerText=propiedades.filter(p=>p.estado==="En alquiler").length;
 
- const cant=propiedades.reduce((n,p)=>
-   n+(p.pagos||[]).filter(x=>x.estado==="Pendiente").length,0);
+/* ==============================
+   ELIMINAR
+================================ */
 
- pendientes.innerText=cant;
+async function eliminarPropiedad(){
 
- alertaPagos.innerText=cant
- ?`💰 ${cant} pago${cant===1?"":"s"} pendiente${cant===1?"":"s"}`
- :"💰 Sin pagos pendientes";
+  if(!confirm(
+    "¿Seguro que querés eliminar esta propiedad y sus pagos?"
+  )) return;
+
+  const p=propiedades[seleccion];
+
+  const {error} =
+  await db
+  .from("propiedades")
+  .delete()
+  .eq("id",p.id);
+
+  if(error){
+
+    alert(
+      "No se pudo eliminar la propiedad."
+    );
+
+    return;
+
+  }
+
+  seleccion=null;
+
+  cerrar("modalDetalle");
+
+  await cargarPropiedades();
+
+}
+
+
+/* ==============================
+   UTILIDADES
+================================ */
+
+function abrir(id){
+
+  document.getElementById(id).style.display="block";
+
+}
+
+function cerrar(id){
+
+  document.getElementById(id).style.display="none";
+
 }
 
 function esc(v){
- return String(v??"")
- .replaceAll("&","&amp;")
- .replaceAll("<","&lt;")
- .replaceAll(">","&gt;")
- .replaceAll('"',"&quot;")
- .replaceAll("'","&#039;");
+
+  return String(v ?? "")
+  .replaceAll("&","&amp;")
+  .replaceAll("<","&lt;")
+  .replaceAll(">","&gt;")
+  .replaceAll('"',"&quot;")
+  .replaceAll("'","&#039;");
+
 }
 
-guardar();
-mostrar();
+
+/* ==============================
+   COMPROBAR SESIÓN AL ABRIR
+================================ */
+
+async function iniciarApp(){
+
+  const {data} =
+  await db.auth.getSession();
+
+  if(data.session){
+
+    usuario=data.session.user;
+
+    mostrarAplicacion();
+
+    await cargarPropiedades();
+
+  }else{
+
+    document.getElementById("loginScreen").style.display =
+    "flex";
+
+  }
+
+}
+
+iniciarApp();
 
 </script>
+
 </body>
 </html>
