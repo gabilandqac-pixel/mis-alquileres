@@ -726,11 +726,41 @@ async function cargarPropiedades(){
     return;
   }
 
-  propiedades=data || [];
+  propiedades = data || [];
 
-  mostrarPropiedades();
+// Obtener el mes actual
+const hoy = new Date();
 
-  await actualizarPagosPendientes();
+const mesActual =
+  hoy.getFullYear() + "-" +
+  String(hoy.getMonth() + 1).padStart(2,"0");
+
+// Buscar los pagos realizados del mes actual
+const {data: pagosMes, error: errorPagos} =
+await db
+.from("pagos")
+.select("propiedad_id")
+.eq("mes", mesActual)
+.eq("estado", "Pagado");
+
+if(errorPagos){
+  console.error(errorPagos);
+}
+
+// Guardamos qué propiedades ya pagaron
+const idsPagados = new Set(
+  (pagosMes || []).map(p => p.propiedad_id)
+);
+
+// Agregamos temporalmente el estado del mes
+propiedades = propiedades.map(p => ({
+  ...p,
+  pagado_mes_actual: idsPagados.has(p.id)
+}));
+
+mostrarPropiedades();
+
+await actualizarPagosPendientes();
 
 }
 
@@ -751,7 +781,12 @@ function mostrarPropiedades(){
     '<div class="empty">Todavía no hay propiedades.<br>Agregá la primera.</div>';
 
   }
+const hoy = new Date();
 
+const mesActual =
+  hoy.getFullYear() + "-" +
+  String(hoy.getMonth() + 1).padStart(2,"0");
+  
   propiedades.forEach((p,i)=>{
 
     const tarjeta=document.createElement("div");
@@ -778,6 +813,16 @@ function mostrarPropiedades(){
       <span class="status">
       ${esc(p.estado)}
       </span>
+      
+      ${p.estado === "En alquiler" ? `
+  <small style="
+    margin-top:7px;
+    font-weight:bold;
+    color:${p.pagado_mes_actual ? "#16804a" : "#d92d20"};
+  ">
+    ${p.pagado_mes_actual ? "🟢 Pagado este mes" : "🔴 Pendiente este mes"}
+  </small>
+` : ""}
 
     </div>
 
@@ -1263,25 +1308,57 @@ async function mostrarPagos(){
 }
 
 
-async function actualizarPagosPendientes(){
+ async function actualizarPagosPendientes(){
 
+  // Mes actual en formato AAAA-MM
+  const hoy = new Date();
+
+  const mesActual =
+    hoy.getFullYear() + "-" +
+    String(hoy.getMonth() + 1).padStart(2,"0");
+
+  // Buscar pagos PAGADOS del mes actual
   const {data,error} =
   await db
   .from("pagos")
-  .select("id")
-  .eq("estado","Pendiente");
+  .select("propiedad_id")
+  .eq("mes",mesActual)
+  .eq("estado","Pagado");
 
-  if(error) return;
+  if(error){
+    console.error(error);
+    return;
+  }
 
-  const cantidad=data.length;
+  // Propiedades actualmente alquiladas
+  const propiedadesAlquiladas =
+    propiedades.filter(
+      p => p.estado === "En alquiler"
+    );
+
+  // IDs de propiedades que ya pagaron este mes
+  const propiedadesPagadas =
+    new Set(
+      (data || []).map(
+        pago => pago.propiedad_id
+      )
+    );
+
+  // Las alquiladas que NO tienen pago son pendientes
+  const pendientesMes =
+    propiedadesAlquiladas.filter(
+      p => !propiedadesPagadas.has(p.id)
+    );
+
+  const cantidad = pendientesMes.length;
 
   document.getElementById("pendientes").innerText =
-  cantidad;
+    cantidad;
 
   document.getElementById("alertaPagos").innerText =
-  cantidad
-  ? `💰 ${cantidad} pago${cantidad===1?"":"s"} pendiente${cantidad===1?"":"s"}`
-  : "💰 Sin pagos pendientes";
+    cantidad
+    ? `💰 ${cantidad} alquiler${cantidad===1?"":"es"} pendiente${cantidad===1?"":"s"} este mes`
+    : "💰 Todos los alquileres del mes están pagados";
 
 }
 
