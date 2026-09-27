@@ -591,6 +591,13 @@ onclick="cerrar('modalPago')">×</button>
 <option>Pendiente</option>
 </select>
 
+ <label>Medio de pago</label>
+
+<select id="medioPago">
+<option>Transferencia</option>
+<option>Efectivo</option>
+</select>
+
 <button class="primary" onclick="guardarPago()">
 Guardar pago
 </button>
@@ -619,6 +626,7 @@ const db = supabase.createClient(
 let propiedades = [];
 let seleccion = null;
 let editando = null;
+let pagoEditando = null;
 let usuario = null;
 
 
@@ -1152,6 +1160,8 @@ function editarPropiedad(){
 
 function abrirPago(){
 
+  pagoEditando = null;
+
   const p=propiedades[seleccion];
 
   document.getElementById("mesPago").value="";
@@ -1168,6 +1178,40 @@ function abrirPago(){
 
 }
 
+  async function editarPago(id){
+
+  const {data,error} =
+  await db
+  .from("pagos")
+  .select("*")
+  .eq("id",id)
+  .single();
+
+  if(error){
+    console.error(error);
+    alert("No se pudo cargar el pago.");
+    return;
+  }
+
+  pagoEditando = id;
+
+  document.getElementById("mesPago").value =
+  data.mes || "";
+
+  document.getElementById("importePago").value =
+  data.importe || "";
+
+  document.getElementById("fechaPago").value =
+  data.fecha_pago || "";
+
+  document.getElementById("estadoPago").value =
+  data.estado || "Pagado";
+
+  document.getElementById("medioPago").value =
+  data.medio_pago || "Transferencia";
+
+  abrir("modalPago");
+}
 
 async function guardarPago(){
 
@@ -1187,24 +1231,45 @@ async function guardarPago(){
 
   }
 
-  const {error} =
+ const datosPago = {
+
+  propiedad_id:p.id,
+
+  mes:mes,
+
+  importe:importe,
+
+  fecha_pago:
+  document.getElementById("fechaPago").value || null,
+
+  estado:
+  document.getElementById("estadoPago").value,
+
+  medio_pago:
+  document.getElementById("medioPago").value
+
+};
+
+let resultado;
+
+if(pagoEditando){
+
+  resultado =
   await db
   .from("pagos")
-  .insert({
+  .update(datosPago)
+  .eq("id",pagoEditando);
 
-    propiedad_id:p.id,
+}else{
 
-    mes:mes,
+  resultado =
+  await db
+  .from("pagos")
+  .insert(datosPago);
 
-    importe:importe,
+}
 
-    fecha_pago:
-    document.getElementById("fechaPago").value || null,
-
-    estado:
-    document.getElementById("estadoPago").value
-
-  });
+const error = resultado.error;
 
   if(error){
 
@@ -1219,6 +1284,8 @@ async function guardarPago(){
 
   }
 
+  pagoEditando = null;
+  
   cerrar("modalPago");
 
   await mostrarPagos();
@@ -1298,6 +1365,15 @@ async function mostrarPagos(){
         : "Sin fecha registrada"
       }
       </small>
+
+      <small>
+  Medio: ${esc(x.medio_pago || "Transferencia")}
+ </small>
+ <button
+  class="secondary"
+  onclick="editarPago(${x.id})">
+  ✏️ Editar pago
+</button>
 
     </div>
 
