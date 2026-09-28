@@ -547,7 +547,10 @@ onclick="cerrar('modalDetalle')">×</button>
   <button class="secondary" onclick="abrirCalculoAumento()">
 📈 Calcular aumento
 </button>
-
+<button class="secondary" onclick="probarFuncionAumento()">
+🧪 Probar conexión automática
+</button>
+  
 <button class="primary" onclick="abrirPago()">
 ＋ Registrar pago
 </button>
@@ -1187,6 +1190,30 @@ Muchas gracias.`;
   window.open(url,"_blank");
 
 }
+async function probarFuncionAumento(){
+
+  const { data, error } =
+    await db.functions.invoke("quick-processor", {
+      body: {
+        tipo: "ICL",
+        fecha_desde: "2026-06-01",
+        fecha_hasta: "2026-09-01"
+      }
+    });
+
+  if(error){
+    console.error(error);
+    alert("Error al conectar con la función.");
+    return;
+  }
+
+  console.log("Respuesta Edge Function:", data);
+
+  alert(
+    data.mensaje ||
+    "La función respondió correctamente."
+  );
+}  
 function abrirCalculoAumento(){
 
   const p = propiedades[seleccion];
