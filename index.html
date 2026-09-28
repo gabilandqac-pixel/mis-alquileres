@@ -797,6 +797,54 @@ const mesActual =
   
   propiedades.forEach((p,i)=>{
 
+    // Calcular vencimiento del alquiler
+const hoyFecha = new Date();
+hoyFecha.setHours(0,0,0,0);
+
+const vencimiento = new Date(
+  hoyFecha.getFullYear(),
+  hoyFecha.getMonth(),
+  p.dia_vencimiento || 5
+);
+
+vencimiento.setHours(0,0,0,0);
+
+const diferenciaDias = Math.round(
+  (vencimiento - hoyFecha) / (1000 * 60 * 60 * 24)
+);
+
+let textoVencimiento = "";
+let colorVencimiento = "#667085";
+
+if(p.pagado_mes_actual){
+
+  textoVencimiento = "🟢 Pagado este mes";
+  colorVencimiento = "#16804a";
+
+}else if(diferenciaDias > 1){
+
+  textoVencimiento =
+    `🟡 Vence en ${diferenciaDias} días`;
+  colorVencimiento = "#b7791f";
+
+}else if(diferenciaDias === 1){
+
+  textoVencimiento = "🟡 Vence mañana";
+  colorVencimiento = "#b7791f";
+
+}else if(diferenciaDias === 0){
+
+  textoVencimiento = "🟠 Vence hoy";
+  colorVencimiento = "#e66a00";
+
+}else{
+
+  textoVencimiento =
+    `🔴 Vencido hace ${Math.abs(diferenciaDias)} día${Math.abs(diferenciaDias)===1 ? "" : "s"}`;
+  colorVencimiento = "#d92d20";
+
+}
+
     const tarjeta=document.createElement("div");
 
     tarjeta.className="property";
@@ -822,15 +870,32 @@ const mesActual =
       ${esc(p.estado)}
       </span>
       
-      ${p.estado === "En alquiler" ? `
+    ${p.estado === "En alquiler" ? `
   <small style="
     margin-top:7px;
     font-weight:bold;
-    color:${p.pagado_mes_actual ? "#16804a" : "#d92d20"};
+    color:${colorVencimiento};
   ">
-    ${p.pagado_mes_actual ? "🟢 Pagado este mes" : "🔴 Pendiente este mes"}
+    ${textoVencimiento}
   </small>
 ` : ""}
+${p.estado === "En alquiler" && !p.pagado_mes_actual ? `
+  <button
+    style="
+      margin-top:8px;
+      border:0;
+      background:#25D366;
+      color:white;
+      padding:7px 10px;
+      border-radius:8px;
+      font-weight:bold;
+      cursor:pointer;
+    "
+    onclick="event.stopPropagation(); avisarWhatsApp(${i});">
+    💬 Avisar por WhatsApp
+  </button>
+` : ""}
+
 
     </div>
 
@@ -997,7 +1062,62 @@ async function guardarPropiedad(){
 /* ==============================
    DETALLE
 ================================ */
+function avisarWhatsApp(i){
 
+  const p = propiedades[i];
+
+  if(!p.telefono){
+    alert("Esta propiedad no tiene teléfono del inquilino cargado.");
+    return;
+  }
+
+  // Limpiar el teléfono dejando solamente números
+  let telefono = String(p.telefono).replace(/\D/g,"");
+
+// Preparar celulares argentinos para WhatsApp
+if(telefono.startsWith("0")){
+  telefono = telefono.substring(1);
+}
+
+// Quitar el 15 local si fue cargado
+telefono = telefono.replace(/^(\d{2,4})15/, "$1");
+
+// Si ya comienza con 549, está listo
+if(!telefono.startsWith("549")){
+
+  // Si comienza con 54 pero falta el 9
+  if(telefono.startsWith("54")){
+    telefono = "549" + telefono.substring(2);
+  }else{
+    telefono = "549" + telefono;
+  }
+
+}
+
+  const hoy = new Date();
+
+  const nombreMes = hoy.toLocaleDateString(
+    "es-AR",
+    {month:"long", year:"numeric"}
+  );
+
+  const mensaje =
+`Hola ${p.inquilino || ""}, te recordamos que el alquiler de ${p.direccion}${p.unidad ? " - "+p.unidad : ""} vence el día ${p.dia_vencimiento || 5}.
+
+Según nuestro registro, el alquiler correspondiente a ${nombreMes} todavía se encuentra pendiente.
+
+Muchas gracias.`;
+
+  const url =
+    "https://wa.me/" +
+    telefono +
+    "?text=" +
+    encodeURIComponent(mensaje);
+
+  window.open(url,"_blank");
+
+}
+  
 async function abrirDetalle(i){
 
   seleccion=i;
