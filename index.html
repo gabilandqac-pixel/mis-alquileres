@@ -544,6 +544,10 @@ onclick="cerrar('modalDetalle')">×</button>
 ✏️ Editar propiedad
 </button>
 
+  <button class="secondary" onclick="abrirCalculoAumento()">
+📈 Calcular aumento
+</button>
+
 <button class="primary" onclick="abrirPago()">
 ＋ Registrar pago
 </button>
@@ -622,6 +626,47 @@ Guardar pago
 </button>
 
 </div>
+</div>
+
+  <!-- AUMENTO DE ALQUILER -->
+
+<div class="modal" id="modalAumento">
+
+  <div class="box">
+
+    <div class="modal-head">
+      <h2>📈 Calcular aumento</h2>
+
+      <button class="close"
+        onclick="cerrar('modalAumento')">×</button>
+    </div>
+
+    <label>Tipo de ajuste</label>
+    <input id="aumentoTipo" readonly>
+
+    <label>Alquiler actual</label>
+    <input id="aumentoActual" readonly>
+
+    <label id="labelPorcentajeAumento">
+      Porcentaje de aumento (%)
+    </label>
+    <input
+      id="porcentajeAumento"
+      type="number"
+      step="0.001"
+      min="0"
+      placeholder="Ej: 6.8"
+      oninput="calcularNuevoAlquiler()">
+
+    <label>Nuevo alquiler</label>
+    <input id="aumentoNuevo" readonly>
+
+    <button onclick="confirmarAumento()">
+      Confirmar aumento
+    </button>
+
+  </div>
+
 </div>
 
 
@@ -1140,6 +1185,183 @@ Muchas gracias.`;
     encodeURIComponent(mensaje);
 
   window.open(url,"_blank");
+
+}
+function abrirCalculoAumento(){
+
+  const p = propiedades[seleccion];
+
+  if(!p){
+    alert("No se encontró la propiedad.");
+    return;
+  }
+
+  if(!p.alquiler){
+    alert("Esta propiedad no tiene un alquiler cargado.");
+    return;
+  }
+
+  let tipoTexto = "IPC (INDEC)";
+
+  if(p.tipo_ajuste === "ICL"){
+    tipoTexto = "ICL (BCRA)";
+  }
+
+  if(p.tipo_ajuste === "PROMEDIO"){
+    tipoTexto = "Promedio IPC + ICL";
+  }
+
+  document.getElementById("aumentoTipo").value =
+    tipoTexto;
+
+  document.getElementById("aumentoActual").value =
+    Number(p.alquiler).toLocaleString(
+      "es-AR",
+      {
+        style:"currency",
+        currency:"ARS"
+      }
+    );
+
+  document.getElementById("porcentajeAumento").value = "";
+
+  document.getElementById("aumentoNuevo").value = "";
+
+  abrir("modalAumento");
+
+}
+function calcularNuevoAlquiler(){
+
+  const p = propiedades[seleccion];
+
+  if(!p) return;
+
+  const textoPorcentaje =
+    document.getElementById("porcentajeAumento").value;
+
+  const porcentaje =
+    parseFloat(String(textoPorcentaje).replace(",", "."));
+
+  if(isNaN(porcentaje)){
+    document.getElementById("aumentoNuevo").value = "";
+    return;
+  }
+
+  const alquilerActual = Number(p.alquiler);
+
+  const alquilerNuevo =
+    alquilerActual * (1 + porcentaje / 100);
+
+  document.getElementById("aumentoNuevo").value =
+    alquilerNuevo.toLocaleString(
+      "es-AR",
+      {
+        style:"currency",
+        currency:"ARS",
+        maximumFractionDigits:2
+      }
+    );
+
+}
+async function confirmarAumento(){
+
+  const p = propiedades[seleccion];
+
+  if(!p){
+    alert("No se encontró la propiedad.");
+    return;
+  }
+
+  const textoPorcentaje =
+    document.getElementById("porcentajeAumento").value;
+
+  const porcentaje =
+    parseFloat(String(textoPorcentaje).replace(",", "."));
+
+  if(isNaN(porcentaje) || porcentaje < 0){
+    alert("Ingresá un porcentaje válido.");
+    return;
+  }
+
+  const alquilerAnterior = Number(p.alquiler);
+
+  const alquilerNuevo =
+    Math.round(
+      alquilerAnterior * (1 + porcentaje / 100) * 100
+    ) / 100;
+
+  const hoy = new Date();
+
+  const fechaHoy =
+    hoy.getFullYear() + "-" +
+    String(hoy.getMonth() + 1).padStart(2,"0") + "-" +
+    String(hoy.getDate()).padStart(2,"0");
+
+  let fechaBase;
+
+  if(p.proximo_aumento){
+    fechaBase = new Date(
+      p.proximo_aumento + "T12:00:00"
+    );
+  }else{
+    fechaBase = new Date();
+  }
+
+  const frecuencia =
+    Number(p.frecuencia_aumento) || 3;
+
+  fechaBase.setMonth(
+    fechaBase.getMonth() + frecuencia
+  );
+
+  const proximoAumento =
+    fechaBase.getFullYear() + "-" +
+    String(fechaBase.getMonth() + 1).padStart(2,"0") + "-" +
+    String(fechaBase.getDate()).padStart(2,"0");
+
+  const confirmar = window.confirm(
+    "¿Confirmar aumento?\n\n" +
+    "Alquiler anterior: " +
+    alquilerAnterior.toLocaleString("es-AR",{
+      style:"currency",
+      currency:"ARS"
+    }) +
+    "\n\nPorcentaje: " +
+    porcentaje.toLocaleString("es-AR") +
+    "%\n\nNuevo alquiler: " +
+    alquilerNuevo.toLocaleString("es-AR",{
+      style:"currency",
+      currency:"ARS"
+    }) +
+    "\n\nPróximo aumento: " +
+    proximoAumento
+  );
+
+  if(!confirmar) return;
+
+  const {error} =
+    await db
+    .from("propiedades")
+    .update({
+      alquiler_anterior: alquilerAnterior,
+      alquiler: alquilerNuevo,
+      porcentaje_ultimo_aumento: porcentaje,
+      fecha_ultimo_aumento: fechaHoy,
+      proximo_aumento: proximoAumento
+    })
+    .eq("id",p.id);
+
+  if(error){
+    console.error(error);
+    alert("No se pudo guardar el aumento.");
+    return;
+  }
+
+  cerrar("modalAumento");
+
+  alert("Aumento guardado correctamente.");
+
+  await cargarPropiedades();
 
 }
   
