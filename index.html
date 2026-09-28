@@ -504,6 +504,14 @@ onclick="cerrar('modalPropiedad')">×</button>
   <option value="12">Cada 12 meses</option>
 </select> 
 
+  <label>Tipo de ajuste</label>
+
+<select id="tipoAjuste">
+  <option value="IPC">IPC (INDEC)</option>
+  <option value="ICL">ICL (BCRA)</option>
+  <option value="PROMEDIO">Promedio IPC + ICL</option>
+</select>
+
 <label>N° cliente Edesur</label>
 <input id="edesur">
 
@@ -1012,6 +1020,9 @@ function obtenerFormulario(){
     frecuencia_aumento:
     Number(document.getElementById("frecuenciaAumento").value) || 3,
 
+    tipo_ajuste:
+    document.getElementById("tipoAjuste").value || "IPC",
+
     edesur:
     document.getElementById("edesur").value.trim(),
 
@@ -1209,6 +1220,17 @@ async function abrirDetalle(i){
 <strong>Cada ${p.frecuencia_aumento || 3} meses</strong>
 </div>
 
+<div class="row">
+<small>Tipo de ajuste</small>
+<strong>${
+  p.tipo_ajuste === "ICL"
+    ? "ICL (BCRA)"
+    : p.tipo_ajuste === "PROMEDIO"
+      ? "Promedio IPC + ICL"
+      : "IPC (INDEC)"
+}</strong>
+</div>
+
   <div class="row">
   <small>Edesur</small>
   <strong>${esc(p.edesur || "—")}</strong>
@@ -1279,6 +1301,9 @@ function editarPropiedad(){
 
   document.getElementById("frecuenciaAumento").value =
   p.frecuencia_aumento || 3;
+
+  document.getElementById("tipoAjuste").value =
+p.tipo_ajuste || "IPC";
 
   document.getElementById("edesur").value =
   p.edesur || "";
