@@ -493,6 +493,17 @@ onclick="cerrar('modalPropiedad')">×</button>
 <label>Próximo aumento</label>
 <input id="proximoAumento" type="date">
 
+ <label>Frecuencia de aumento</label>
+
+<select id="frecuenciaAumento">
+  <option value="1">Cada 1 mes</option>
+  <option value="2">Cada 2 meses</option>
+  <option value="3" selected>Cada 3 meses</option>
+  <option value="4">Cada 4 meses</option>
+  <option value="6">Cada 6 meses</option>
+  <option value="12">Cada 12 meses</option>
+</select> 
+
 <label>N° cliente Edesur</label>
 <input id="edesur">
 
@@ -998,6 +1009,9 @@ function obtenerFormulario(){
     proximo_aumento:
     document.getElementById("proximoAumento").value || null,
 
+    frecuencia_aumento:
+    Number(document.getElementById("frecuenciaAumento").value) || 3,
+
     edesur:
     document.getElementById("edesur").value.trim(),
 
@@ -1191,6 +1205,11 @@ async function abrirDetalle(i){
   </div>
 
   <div class="row">
+<small>Frecuencia de aumento</small>
+<strong>Cada ${p.frecuencia_aumento || 3} meses</strong>
+</div>
+
+  <div class="row">
   <small>Edesur</small>
   <strong>${esc(p.edesur || "—")}</strong>
   </div>
@@ -1257,6 +1276,9 @@ function editarPropiedad(){
 
   document.getElementById("proximoAumento").value =
   p.proximo_aumento || "";
+
+  document.getElementById("frecuenciaAumento").value =
+  p.frecuencia_aumento || 3;
 
   document.getElementById("edesur").value =
   p.edesur || "";
