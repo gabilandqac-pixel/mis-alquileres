@@ -1244,7 +1244,7 @@ async function probarFuncionAumento(){
 
 }
 
-function abrirCalculoAumento(){
+async function abrirCalculoAumento(){
 
   const p = propiedades[seleccion];
 
@@ -1281,11 +1281,62 @@ function abrirCalculoAumento(){
     );
 
   document.getElementById("porcentajeAumento").value = "";
-
   document.getElementById("aumentoNuevo").value = "";
 
   abrir("modalAumento");
 
+  // CÁLCULO AUTOMÁTICO ICL
+  if(p.tipo_ajuste === "ICL"){
+
+    if(!p.fecha_ultimo_aumento && !p.inicio_contrato){
+      alert(
+        "Falta la fecha de inicio del contrato para calcular el ICL."
+      );
+      return;
+    }
+
+    const fechaDesde =
+      p.fecha_ultimo_aumento ||
+      p.inicio_contrato;
+
+    const hoy = new Date();
+
+   const fechaHasta =
+  p.proximo_aumento ||
+  (
+    hoy.getFullYear() + "-" +
+    String(hoy.getMonth() + 1).padStart(2,"0") + "-" +
+    String(hoy.getDate()).padStart(2,"0")
+  );
+
+    document.getElementById("porcentajeAumento").placeholder =
+      "Consultando BCRA...";
+
+    const { data, error } =
+      await db.functions.invoke("quick-processor", {
+        body: {
+          tipo: "ICL",
+          fecha_desde: fechaDesde,
+          fecha_hasta: fechaHasta
+        }
+      });
+
+    document.getElementById("porcentajeAumento").placeholder =
+      "Ej: 6.8";
+
+    if(error || !data || !data.ok){
+      console.error(error || data);
+      alert(
+        "No se pudo obtener automáticamente el ICL. Podés ingresar el porcentaje manualmente."
+      );
+      return;
+    }
+
+    document.getElementById("porcentajeAumento").value =
+      data.porcentaje;
+
+    calcularNuevoAlquiler();
+  }
 }
 function calcularNuevoAlquiler(){
 
