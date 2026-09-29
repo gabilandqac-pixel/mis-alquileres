@@ -1325,6 +1325,13 @@ if(
           fecha_hasta: fechaHasta
         }
       });
+  console.log("RESPUESTA AUTOMATICA:", data);
+console.log("ERROR AUTOMATICO:", error);
+
+alert(
+  "Respuesta recibida: " +
+  JSON.stringify(data)
+);
 
     document.getElementById("porcentajeAumento").placeholder =
       "Ej: 6.8";
