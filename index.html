@@ -1288,7 +1288,8 @@ async function abrirCalculoAumento(){
   // CÁLCULO AUTOMÁTICO IPC / ICL
 if(
   p.tipo_ajuste === "ICL" ||
-  p.tipo_ajuste === "IPC"
+  p.tipo_ajuste === "IPC" ||
+  p.tipo_ajuste === "PROMEDIO"
 ){
 
     if(!p.fecha_ultimo_aumento && !p.inicio_contrato){
@@ -1315,7 +1316,9 @@ if(
     document.getElementById("porcentajeAumento").placeholder =
   p.tipo_ajuste === "IPC"
     ? "Consultando INDEC..."
-    : "Consultando BCRA...";
+    : p.tipo_ajuste === "PROMEDIO"
+      ? "Consultando INDEC + BCRA..."
+      : "Consultando BCRA...";
 
     const { data, error } =
       await db.functions.invoke("quick-processor", {
