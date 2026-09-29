@@ -1285,8 +1285,11 @@ async function abrirCalculoAumento(){
 
   abrir("modalAumento");
 
-  // CÁLCULO AUTOMÁTICO ICL
-  if(p.tipo_ajuste === "ICL"){
+  // CÁLCULO AUTOMÁTICO IPC / ICL
+if(
+  p.tipo_ajuste === "ICL" ||
+  p.tipo_ajuste === "IPC"
+){
 
     if(!p.fecha_ultimo_aumento && !p.inicio_contrato){
       alert(
@@ -1310,12 +1313,14 @@ async function abrirCalculoAumento(){
   );
 
     document.getElementById("porcentajeAumento").placeholder =
-      "Consultando BCRA...";
+  p.tipo_ajuste === "IPC"
+    ? "Consultando INDEC..."
+    : "Consultando BCRA...";
 
     const { data, error } =
       await db.functions.invoke("quick-processor", {
         body: {
-          tipo: "ICL",
+         tipo: p.tipo_ajuste,
           fecha_desde: fechaDesde,
           fecha_hasta: fechaHasta
         }
@@ -1327,7 +1332,9 @@ async function abrirCalculoAumento(){
     if(error || !data || !data.ok){
       console.error(error || data);
       alert(
-        "No se pudo obtener automáticamente el ICL. Podés ingresar el porcentaje manualmente."
+        "No se pudo obtener automáticamente el " +
+p.tipo_ajuste +
+". Podés ingresar el porcentaje manualmente."
       );
       return;
     }
