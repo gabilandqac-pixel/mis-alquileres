@@ -412,12 +412,12 @@ Salir
 
 <div class="alerts">
 
-<div class="alert">
-📈 Próximos aumentos por IPC
+<div class="alert" id="alertaAumentos">
+  📈 Sin aumentos pendientes
 </div>
 
-<div class="alert">
-📄 Contratos próximos a vencer
+<div class="alert" id="alertaContratos">
+  📄 Sin contratos próximos a vencer
 </div>
 
 <div class="alert" id="alertaPagos">
@@ -1082,34 +1082,17 @@ ${p.estado === "En alquiler" && !p.pagado_mes_actual ? `
 
   });
 
-  // Mostrar panel de alertas
-let panelAlertas = document.getElementById("panelAlertas");
+  document.getElementById("alertaAumentos").innerText =
+  aumentosProximos > 0
+    ? `📈 ${aumentosProximos} aumentos pendientes/próximos`
+    : "📈 Sin aumentos pendientes";
 
-if(!panelAlertas){
-  panelAlertas = document.createElement("div");
-  panelAlertas.id = "panelAlertas";
-  lista.parentNode.insertBefore(panelAlertas, lista);
-}
+  document.getElementById("alertaContratos").innerText =
+  contratosProximos > 0
+    ? `📄 ${contratosProximos} contratos próximos a vencer`
+    : "📄 Sin contratos próximos a vencer";
+  
 
-panelAlertas.innerHTML = `
-  <div style="
-    margin-bottom:16px;
-    padding:14px;
-    background:#ffffff;
-    border:1px solid #e5e7eb;
-    border-radius:12px;
-  ">
-    <strong style="display:block;margin-bottom:10px;">
-      🔔 Alertas
-    </strong>
-
-    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <span>🔴 ${alquileresVencidos} alquileres vencidos</span>
-      <span>📈 ${aumentosProximos} aumentos pendientes/próximos</span>
-      <span>📄 ${contratosProximos} contratos próximos a vencer</span>
-    </div>
-  </div>
-`;
   document.getElementById("total").innerText =
   propiedades.length;
 
