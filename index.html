@@ -956,10 +956,10 @@ if(p.proximo_aumento){
   if(diasAumento < 0){
     aumentosProximos++;
 
-    textoAumento =
-      "🔴 Aumento pendiente hace " +
-      Math.abs(diasAumento) +
-      " días";
+  textoAumento =
+  "🔴 Aumento pendiente hace " +
+  Math.abs(diasAumento) +
+  (Math.abs(diasAumento) === 1 ? " día" : " días");
 
     colorAumento = "#b91c1c";
 
