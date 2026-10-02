@@ -418,7 +418,9 @@ Salir
   📈 Sin aumentos pendientes
 </div>
 
-<div class="alert" id="alertaContratos">
+<div class="alert" id="alertaContratos"
+     onclick="irPrimerContrato()"
+     style="cursor:pointer;">
   📄 Sin contratos próximos a vencer
 </div>
 
@@ -1301,6 +1303,32 @@ Muchas gracias.`;
   window.open(url,"_blank");
 
 }
+function irPrimerContrato(){
+
+  const hoy = new Date();
+  hoy.setHours(12,0,0,0);
+
+  const indice = propiedades.findIndex((p) => {
+
+    if(!p.fin_contrato) return false;
+
+    const fecha =
+      new Date(p.fin_contrato + "T12:00:00");
+
+    const dias =
+      Math.round(
+        (fecha - hoy) /
+        (1000 * 60 * 60 * 24)
+      );
+
+    return dias >= 0 && dias <= 60;
+  });
+
+  if(indice >= 0){
+    abrirDetalle(indice);
+  }
+}
+  
 function irPrimerAumento(){
 
   const hoy = new Date();
