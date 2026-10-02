@@ -547,9 +547,6 @@ onclick="cerrar('modalDetalle')">×</button>
   <button class="secondary" onclick="abrirCalculoAumento()">
 📈 Calcular aumento
 </button>
-<button class="secondary" onclick="probarFuncionAumento()">
-🧪 Probar conexión automática
-</button>
   
 <button class="primary" onclick="abrirPago()">
 ＋ Registrar pago
@@ -1188,59 +1185,6 @@ Muchas gracias.`;
     encodeURIComponent(mensaje);
 
   window.open(url,"_blank");
-
-}
-async function probarFuncionAumento(){
-
-  const { data, error } =
-    await db.functions.invoke("quick-processor", {
-      body: {
-        tipo: "ICL",
-        fecha_desde: "2026-06-01",
-        fecha_hasta: "2026-09-01"
-      }
-    });
-
-  if(error){
-    console.error(error);
-    alert("Error al consultar el ICL.");
-    return;
-  }
-
-  if(!data || !data.ok){
-    console.error(data);
-    alert(
-      "La función respondió con error: " +
-      (data?.error || "Error desconocido")
-    );
-    return;
-  }
-
-  alert(
-    "DATOS ICL - BCRA\n\n" +
-
-    "Fecha inicial usada: " +
-    data.fecha_inicial_usada +
-
-    "\nICL inicial: " +
-    data.indice_inicial +
-
-    "\n\nFecha final usada: " +
-    data.fecha_final_usada +
-
-    "\nICL final: " +
-    data.indice_final +
-
-    "\n\nAumento calculado: " +
-    Number(data.porcentaje).toLocaleString(
-      "es-AR",
-      {
-        minimumFractionDigits: 3,
-        maximumFractionDigits: 3
-      }
-    ) +
-    "%"
-  );
 
 }
 
