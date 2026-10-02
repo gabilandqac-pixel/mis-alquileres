@@ -908,7 +908,51 @@ if(p.pagado_mes_actual){
   colorVencimiento = "#d92d20";
 
 }
+// Calcular próximo aumento
+let textoAumento = "";
+let colorAumento = "";
 
+if(p.proximo_aumento){
+
+  const fechaAumento =
+    new Date(p.proximo_aumento + "T12:00:00");
+
+  const hoyAumento = new Date();
+  hoyAumento.setHours(12,0,0,0);
+
+  const diasAumento =
+    Math.round(
+      (fechaAumento - hoyAumento) /
+      (1000 * 60 * 60 * 24)
+    );
+
+  if(diasAumento < 0){
+
+    textoAumento =
+      "🔴 Aumento pendiente hace " +
+      Math.abs(diasAumento) +
+      " días";
+
+    colorAumento = "#b91c1c";
+
+  }else if(diasAumento === 0){
+
+    textoAumento =
+      "🔴 Aumento corresponde hoy";
+
+    colorAumento = "#b91c1c";
+
+  }else if(diasAumento <= 30){
+
+    textoAumento =
+      "📈 Aumento en " +
+      diasAumento +
+      " días";
+
+    colorAumento = "#b45309";
+  }
+}
+    
     const tarjeta=document.createElement("div");
 
     tarjeta.className="property";
@@ -929,6 +973,17 @@ if(p.pagado_mes_actual){
       <small>
       ${esc(p.inquilino || "Sin inquilino")}
       </small>
+
+      ${textoAumento ? `
+  <small style="
+    display:block;
+    margin-top:6px;
+    font-weight:700;
+    color:${colorAumento};
+  ">
+    ${textoAumento}
+  </small>
+` : ""}
 
       <span class="status">
       ${esc(p.estado)}
