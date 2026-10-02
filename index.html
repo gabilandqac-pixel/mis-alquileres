@@ -858,8 +858,34 @@ const hoy = new Date();
 const mesActual =
   hoy.getFullYear() + "-" +
   String(hoy.getMonth() + 1).padStart(2,"0");
+
+  // ===== PANEL DE ALERTAS =====
+
+let alquileresVencidos = 0;
+let aumentosProximos = 0;
+let contratosProximos = 0;
   
   propiedades.forEach((p,i)=>{
+
+    // Calcular vencimiento del contrato
+if(p.fin_contrato){
+
+  const fechaFinContrato =
+    new Date(p.fin_contrato + "T12:00:00");
+
+  const hoyContrato = new Date();
+  hoyContrato.setHours(12,0,0,0);
+
+  const diasContrato =
+    Math.round(
+      (fechaFinContrato - hoyContrato) /
+      (1000 * 60 * 60 * 24)
+    );
+
+  if(diasContrato >= 0 && diasContrato <= 60){
+    contratosProximos++;
+  }
+}
 
     // Calcular vencimiento del alquiler
 const hoyFecha = new Date();
@@ -902,6 +928,7 @@ if(p.pagado_mes_actual){
   colorVencimiento = "#e66a00";
 
 }else{
+  alquileresVencidos++;
 
   textoVencimiento =
     `🔴 Vencido hace ${Math.abs(diferenciaDias)} día${Math.abs(diferenciaDias)===1 ? "" : "s"}`;
@@ -927,6 +954,7 @@ if(p.proximo_aumento){
     );
 
   if(diasAumento < 0){
+    aumentosProximos++;
 
     textoAumento =
       "🔴 Aumento pendiente hace " +
@@ -943,6 +971,7 @@ if(p.proximo_aumento){
     colorAumento = "#b91c1c";
 
   }else if(diasAumento <= 30){
+    aumentosProximos++;
 
     textoAumento =
       "📈 Aumento en " +
@@ -1053,6 +1082,34 @@ ${p.estado === "En alquiler" && !p.pagado_mes_actual ? `
 
   });
 
+  // Mostrar panel de alertas
+let panelAlertas = document.getElementById("panelAlertas");
+
+if(!panelAlertas){
+  panelAlertas = document.createElement("div");
+  panelAlertas.id = "panelAlertas";
+  lista.parentNode.insertBefore(panelAlertas, lista);
+}
+
+panelAlertas.innerHTML = `
+  <div style="
+    margin-bottom:16px;
+    padding:14px;
+    background:#ffffff;
+    border:1px solid #e5e7eb;
+    border-radius:12px;
+  ">
+    <strong style="display:block;margin-bottom:10px;">
+      🔔 Alertas
+    </strong>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <span>🔴 ${alquileresVencidos} alquileres vencidos</span>
+      <span>📈 ${aumentosProximos} aumentos pendientes/próximos</span>
+      <span>📄 ${contratosProximos} contratos próximos a vencer</span>
+    </div>
+  </div>
+`;
   document.getElementById("total").innerText =
   propiedades.length;
 
