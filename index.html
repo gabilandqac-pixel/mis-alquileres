@@ -974,15 +974,32 @@ if(p.proximo_aumento){
       ${esc(p.inquilino || "Sin inquilino")}
       </small>
 
-      ${textoAumento ? `
-  <small style="
-    display:block;
-    margin-top:6px;
-    font-weight:700;
-    color:${colorAumento};
+${textoAumento ? `
+  <div style="
+    margin-top:8px;
+    padding:8px;
+    border-radius:8px;
+    background:#f8f8f8;
   ">
-    ${textoAumento}
-  </small>
+    <small style="
+      display:block;
+      font-weight:700;
+      color:${colorAumento};
+      margin-bottom:6px;
+    ">
+      ${textoAumento}
+    </small>
+
+    <button
+      class="secondary"
+      onclick="event.stopPropagation(); abrirAumentoDesdeTarjeta(${i})"
+      style="
+        padding:6px 10px;
+        font-size:12px;
+      ">
+      📈 Calcular aumento
+    </button>
+  </div>
 ` : ""}
 
       <span class="status">
@@ -1241,6 +1258,13 @@ Muchas gracias.`;
 
   window.open(url,"_blank");
 
+}
+
+  function abrirAumentoDesdeTarjeta(indice){
+
+  seleccion = indice;
+
+  abrirCalculoAumento();
 }
 
 async function abrirCalculoAumento(){
