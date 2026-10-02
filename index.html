@@ -412,7 +412,9 @@ Salir
 
 <div class="alerts">
 
-<div class="alert" id="alertaAumentos">
+<div class="alert" id="alertaAumentos"
+     onclick="irPrimerAumento()"
+     style="cursor:pointer;">
   📈 Sin aumentos pendientes
 </div>
 
@@ -1299,7 +1301,32 @@ Muchas gracias.`;
   window.open(url,"_blank");
 
 }
+function irPrimerAumento(){
 
+  const hoy = new Date();
+  hoy.setHours(12,0,0,0);
+
+  const indice = propiedades.findIndex((p) => {
+
+    if(!p.proximo_aumento) return false;
+
+    const fecha =
+      new Date(p.proximo_aumento + "T12:00:00");
+
+    const dias =
+      Math.round(
+        (fecha - hoy) /
+        (1000 * 60 * 60 * 24)
+      );
+
+    return dias <= 30;
+  });
+
+  if(indice >= 0){
+    abrirAumentoDesdeTarjeta(indice);
+  }
+}
+  
   function abrirAumentoDesdeTarjeta(indice){
 
   seleccion = indice;
