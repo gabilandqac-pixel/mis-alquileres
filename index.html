@@ -418,56 +418,9 @@ Salir
 </div>
 
 <section id="moduloAlquileres">
-<div class="stats">
-
-<div class="stat">
-<strong id="total">0</strong>
-<span>Propiedades</span>
-</div>
-
-<div class="stat">
-<strong id="alquiladas">0</strong>
-<span>En alquiler</span>
-</div>
-
-<div class="stat">
-<strong id="pendientes">0</strong>
-<span>Pagos pendientes</span>
-</div>
-
-</div>
-
-<h2>🔔 Alertas</h2>
-
-<div class="alerts">
-
-<div class="alert" id="alertaAumentos"
-     onclick="irPrimerAumento()"
-     style="cursor:pointer;">
-  📈 Sin aumentos pendientes
-</div>
-
-<div class="alert" id="alertaContratos"
-     onclick="irPrimerContrato()"
-     style="cursor:pointer;">
-  📄 Sin contratos próximos a vencer
-</div>
-
-<div class="alert" id="alertaPagos">
-💰 Sin pagos pendientes
-</div>
-
-</div>
-
-<button class="primary" onclick="nuevaPropiedad()">
-＋ Agregar propiedad
-</button>
-
-<h2>Mis propiedades</h2>
-
-<div id="lista">
-<div class="loading">Cargando propiedades...</div>
-</div>
+<button class="primary" onclick="nuevaAlqPropiedad()">＋ Agregar propiedad</button>
+<h2>Propiedades</h2>
+<div id="listaAlqPropiedades"><div class="loading">Cargando propiedades...</div></div>
 </section>
 
 <section id="moduloExpensas" class="section-hidden">
@@ -723,7 +676,9 @@ Guardar pago
 <div class="modal" id="modalExpDetalle"><div class="box" style="max-width:850px">
 <div class="modal-head"><h2 id="expDetalleTitulo">Expensas</h2><button class="close" onclick="cerrar('modalExpDetalle')">×</button></div>
 <div class="actions"><button class="blue" onclick="abrirServicioExpensas()">＋ Agregar servicio/impuesto</button><button class="grey" onclick="abrirUnidadExpensas()">＋ Agregar unidad funcional</button></div>
-<h2>Servicios / Impuestos</h2><div id="tablaServiciosExp"></div>
+<h2>Servicios / Impuestos</h2>
+<label>Ver historial por mes</label><select id="expFiltroMes" onchange="renderServiciosExp();renderSelectorUF()"><option value="">Todos los meses</option></select>
+<div id="tablaServiciosExp"></div>
 <h2>Unidades funcionales</h2>
 <label>Seleccionar unidad funcional</label><select id="selectorUF" onchange="mostrarDetalleUF()"><option value="">Elegir...</option></select>
 <div id="detalleUF"></div>
@@ -732,14 +687,16 @@ Guardar pago
 
 <!-- EXPENSAS: SERVICIO -->
 <div class="modal" id="modalExpServicio"><div class="box">
-<div class="modal-head"><h2>Agregar servicio / impuesto</h2><button class="close" onclick="cerrar('modalExpServicio')">×</button></div>
-<label>Fecha</label><input id="expServFecha" type="date">
-<label>Nombre</label><input id="expServNombre" placeholder="Ej: Edesur, AySA, ARBA">
+<div class="modal-head"><h2 id="expServTitulo">Agregar servicio / impuesto</h2><button class="close" onclick="cerrar('modalExpServicio')">×</button></div>
+<label>Mes</label><input id="expServMes" type="month">
 <label>Número de cuenta</label><input id="expServCuenta">
+<label>Nombre</label><input id="expServNombre" placeholder="Ej: Edesur, AySA, ARBA">
 <label>Valor</label><input id="expServValor" type="number" step="0.01">
+<label>Primer vencimiento</label><input id="expServVenc1" type="date">
+<label>Segundo vencimiento</label><input id="expServVenc2" type="date">
 <h2>Unidades funcionales y porcentajes</h2><div id="expServUFs"></div>
 <div id="expServAviso" class="login-error" style="display:none"></div>
-<button class="primary" onclick="guardarServicioExpensas()">Guardar servicio / impuesto</button>
+<button class="primary" id="btnGuardarExpServicio" onclick="guardarServicioExpensas()">Guardar servicio / impuesto</button>
 </div></div>
 
 <!-- EXPENSAS: UNIDAD -->
@@ -747,6 +704,51 @@ Guardar pago
 <div class="modal-head"><h2>Agregar unidad funcional</h2><button class="close" onclick="cerrar('modalExpUnidad')">×</button></div>
 <label>Nombre de la unidad funcional</label><input id="expUFNombre" placeholder="Ej: UF 1 / Local 1 / Depto A">
 <button class="primary" onclick="guardarUnidadExpensas()">Guardar unidad</button>
+</div></div>
+
+
+<!-- ALQUILERES NUEVO: PROPIEDAD -->
+<div class="modal" id="modalAlqProp"><div class="box">
+<div class="modal-head"><h2>Nueva propiedad</h2><button class="close" onclick="cerrar('modalAlqProp')">×</button></div>
+<label>Nombre / Dirección</label><input id="alqPropNombre">
+<label>Localidad</label><input id="alqPropLocalidad">
+<button class="primary" onclick="guardarAlqPropiedad()">Guardar propiedad</button>
+</div></div>
+
+<!-- ALQUILERES NUEVO: DETALLE PROPIEDAD -->
+<div class="modal" id="modalAlqDetalle"><div class="box" style="max-width:900px">
+<div class="modal-head"><h2 id="alqDetalleTitulo">Propiedad</h2><button class="close" onclick="cerrar('modalAlqDetalle')">×</button></div>
+<button class="blue" onclick="nuevaAlqUnidad()">＋ Agregar unidad</button>
+<h2>Unidades</h2><div id="listaAlqUnidades"></div>
+<div class="actions"><button class="red" onclick="eliminarAlqPropiedad()">Eliminar propiedad</button><button class="grey" onclick="cerrar('modalAlqDetalle')">Cerrar</button></div>
+</div></div>
+
+<!-- ALQUILERES NUEVO: UNIDAD -->
+<div class="modal" id="modalAlqUnidad"><div class="box" style="max-width:760px">
+<div class="modal-head"><h2 id="alqUnidadTitulo">Nueva unidad</h2><button class="close" onclick="cerrar('modalAlqUnidad')">×</button></div>
+<h2>Unidad</h2>
+<label>Nombre de unidad</label><input id="auNombre">
+<label>Destino</label><select id="auDestino"><option>Vivienda</option><option>Comercial</option></select>
+<h2>Datos del inquilino</h2>
+<label>Nombre y apellido / Razón social</label><input id="auInquilino">
+<label>DNI / CUIT</label><input id="auDocumento">
+<label>Teléfono</label><input id="auTelefono">
+<label>Email</label><input id="auEmail" type="email">
+<h2>Datos del contrato</h2>
+<label>Precio</label><input id="auPrecio" type="number" step="0.01">
+<label>Inicio</label><input id="auInicio" type="date">
+<label>Próximo aumento</label><input id="auProx" type="date">
+<label>Tipo de ajuste</label><select id="auAjuste"><option>IPC</option><option>ICL</option><option>Promedio IPC/ICL</option><option>Fijo</option></select>
+<label>Período de ajuste</label><select id="auPeriodo"><option value="1">Cada 1 mes</option><option value="2">Cada 2 meses</option><option value="3" selected>Cada 3 meses</option><option value="4">Cada 4 meses</option><option value="6">Cada 6 meses</option><option value="12">Cada 12 meses</option></select>
+<label>Fin de contrato</label><input id="auFin" type="date">
+<label>Factura</label><select id="auFactura"><option value="false">No</option><option value="true">Sí</option></select>
+<h2>Servicios</h2>
+<label>Edesur - número de cliente/cuenta</label><input id="auEdesur">
+<label>Metrogas - número de cliente/cuenta</label><input id="auMetrogas">
+<h2>Expensas</h2>
+<label>Asignar Unidad Funcional (UF)</label><select id="auExpUF"><option value="">Sin asignar</option></select>
+<button class="primary" onclick="guardarAlqUnidad()">Guardar unidad</button>
+<div class="actions"><button id="btnEliminarAlqUnidad" class="red" style="display:none" onclick="eliminarAlqUnidad()">Eliminar unidad</button></div>
 </div></div>
 
 <script>
@@ -2235,103 +2237,56 @@ function esc(v){
 
 
 /* ==============================
-   MODULO EXPENSAS
+   ALQUILERES POR PROPIEDAD / UNIDAD
 ================================ */
-let expPropiedades=[];
-let expPropSeleccionada=null;
-let expUnidades=[];
-let expServicios=[];
+let alqPropiedades=[], alqPropSeleccionada=null, alqUnidades=[], alqUnidadEditando=null;
 
-function mostrarModulo(modulo){
-  const esAlq=modulo==='alquileres';
-  document.getElementById('moduloAlquileres').classList.toggle('section-hidden',!esAlq);
-  document.getElementById('moduloExpensas').classList.toggle('section-hidden',esAlq);
-  document.getElementById('btnModuloAlquileres').classList.toggle('active',esAlq);
-  document.getElementById('btnModuloExpensas').classList.toggle('active',!esAlq);
-  if(!esAlq) cargarPropiedadesExpensas();
+async function cargarAlqPropiedades(){
+ const c=document.getElementById('listaAlqPropiedades'); if(!c)return;
+ c.innerHTML='<div class="loading">Cargando propiedades...</div>';
+ const {data,error}=await db.from('alq_propiedades').select('*').order('created_at',{ascending:false});
+ if(error){c.innerHTML='<div class="empty">Primero ejecutá el SQL de actualización.</div>';return;}
+ alqPropiedades=data||[];
+ c.innerHTML=alqPropiedades.length?'':'<div class="empty">Todavía no hay propiedades en la nueva estructura.</div>';
+ alqPropiedades.forEach(p=>{const d=document.createElement('div');d.className='property';d.innerHTML=`<div class="icon">🏢</div><div class="info"><strong>${esc(p.nombre)}</strong><small>${esc(p.localidad||'')}</small></div>`;d.onclick=()=>abrirAlqPropiedad(p.id);c.appendChild(d);});
 }
+function nuevaAlqPropiedad(){document.getElementById('alqPropNombre').value='';document.getElementById('alqPropLocalidad').value='';abrir('modalAlqProp');}
+async function guardarAlqPropiedad(){const nombre=document.getElementById('alqPropNombre').value.trim(),localidad=document.getElementById('alqPropLocalidad').value.trim();if(!nombre){alert('Ingresá el nombre o dirección.');return;}const {error}=await db.from('alq_propiedades').insert({user_id:usuario.id,nombre,localidad});if(error){alert(error.message);return;}cerrar('modalAlqProp');await cargarAlqPropiedades();}
+async function abrirAlqPropiedad(id){alqPropSeleccionada=id;const p=alqPropiedades.find(x=>x.id===id);document.getElementById('alqDetalleTitulo').innerText='🏢 '+(p?.nombre||'Propiedad');await cargarAlqUnidades();abrir('modalAlqDetalle');}
+async function cargarAlqUnidades(){const {data,error}=await db.from('alq_unidades').select('*').eq('propiedad_id',alqPropSeleccionada).order('nombre');alqUnidades=data||[];const c=document.getElementById('listaAlqUnidades');if(error){c.innerHTML='<div class="empty">No se pudieron cargar las unidades.</div>';return;}if(!alqUnidades.length){c.innerHTML='<div class="empty">Todavía no hay unidades.</div>';return;}c.innerHTML=alqUnidades.map(u=>`<div class="exp-card" style="cursor:pointer" onclick="editarAlqUnidad(${u.id})"><strong>${esc(u.nombre)}</strong><small>${esc(u.destino||'')} · ${esc(u.inquilino_nombre||'Sin inquilino')}</small><div><b>${moneda(u.precio)}</b> ${u.factura?' · Factura':' · No factura'}</div></div>`).join('');}
+async function cargarUFParaUnidad(sel=''){const s=document.getElementById('auExpUF');s.innerHTML='<option value="">Sin asignar</option>';const {data}=await db.from('exp_unidades').select('id,nombre,propiedad_id').order('nombre');(data||[]).forEach(u=>{const o=document.createElement('option');o.value=u.id;o.textContent=u.nombre;s.appendChild(o)});s.value=sel||'';}
+async function nuevaAlqUnidad(){alqUnidadEditando=null;document.getElementById('alqUnidadTitulo').innerText='Nueva unidad';['auNombre','auInquilino','auDocumento','auTelefono','auEmail','auPrecio','auInicio','auProx','auFin','auEdesur','auMetrogas'].forEach(id=>document.getElementById(id).value='');document.getElementById('auDestino').value='Vivienda';document.getElementById('auAjuste').value='IPC';document.getElementById('auPeriodo').value='3';document.getElementById('auFactura').value='false';document.getElementById('btnEliminarAlqUnidad').style.display='none';await cargarUFParaUnidad();abrir('modalAlqUnidad');}
+async function editarAlqUnidad(id){const u=alqUnidades.find(x=>x.id===id);if(!u)return;alqUnidadEditando=id;document.getElementById('alqUnidadTitulo').innerText='Editar unidad';const vals={auNombre:u.nombre,auDestino:u.destino,auInquilino:u.inquilino_nombre,auDocumento:u.inquilino_documento,auTelefono:u.telefono,auEmail:u.email,auPrecio:u.precio,auInicio:u.inicio,auProx:u.proximo_aumento,auAjuste:u.tipo_ajuste,auPeriodo:u.periodo_ajuste,auFin:u.fin_contrato,auEdesur:u.edesur,auMetrogas:u.metrogas};Object.entries(vals).forEach(([id,v])=>document.getElementById(id).value=v??'');document.getElementById('auFactura').value=String(!!u.factura);document.getElementById('btnEliminarAlqUnidad').style.display='inline-block';await cargarUFParaUnidad(u.exp_uf_id);abrir('modalAlqUnidad');}
+async function guardarAlqUnidad(){const row={user_id:usuario.id,propiedad_id:alqPropSeleccionada,nombre:document.getElementById('auNombre').value.trim(),destino:document.getElementById('auDestino').value,inquilino_nombre:document.getElementById('auInquilino').value.trim(),inquilino_documento:document.getElementById('auDocumento').value.trim(),telefono:document.getElementById('auTelefono').value.trim(),email:document.getElementById('auEmail').value.trim(),precio:Number(document.getElementById('auPrecio').value||0),inicio:document.getElementById('auInicio').value||null,proximo_aumento:document.getElementById('auProx').value||null,tipo_ajuste:document.getElementById('auAjuste').value,periodo_ajuste:Number(document.getElementById('auPeriodo').value),fin_contrato:document.getElementById('auFin').value||null,factura:document.getElementById('auFactura').value==='true',edesur:document.getElementById('auEdesur').value.trim(),metrogas:document.getElementById('auMetrogas').value.trim(),exp_uf_id:Number(document.getElementById('auExpUF').value)||null};if(!row.nombre){alert('Ingresá el nombre de la unidad.');return;}const q=alqUnidadEditando?db.from('alq_unidades').update(row).eq('id',alqUnidadEditando):db.from('alq_unidades').insert(row);const {error}=await q;if(error){alert('No se pudo guardar: '+error.message);return;}cerrar('modalAlqUnidad');await cargarAlqUnidades();}
+async function eliminarAlqUnidad(){if(!alqUnidadEditando||!confirm('¿Eliminar esta unidad?'))return;const {error}=await db.from('alq_unidades').delete().eq('id',alqUnidadEditando);if(error){alert(error.message);return;}cerrar('modalAlqUnidad');await cargarAlqUnidades();}
+async function eliminarAlqPropiedad(){if(!confirm('¿Eliminar esta propiedad y todas sus unidades?'))return;const {error}=await db.from('alq_propiedades').delete().eq('id',alqPropSeleccionada);if(error){alert(error.message);return;}cerrar('modalAlqDetalle');await cargarAlqPropiedades();}
 
-async function cargarPropiedadesExpensas(){
-  const cont=document.getElementById('listaExpensas');
-  cont.innerHTML='<div class="loading">Cargando propiedades...</div>';
-  const {data,error}=await db.from('exp_propiedades').select('*').order('created_at',{ascending:false});
-  if(error){cont.innerHTML='<div class="empty">No se pudieron cargar. Verificá que las tablas de Expensas estén creadas.</div>';return;}
-  expPropiedades=data||[]; cont.innerHTML='';
-  if(!expPropiedades.length){cont.innerHTML='<div class="empty">Todavía no hay propiedades de expensas.</div>';return;}
-  expPropiedades.forEach(p=>{
-    const d=document.createElement('div'); d.className='property';
-    d.innerHTML=`<div class="icon">🧾</div><div class="info"><strong>${esc(p.nombre)}</strong><small>${esc(p.localidad||'')}</small></div>`;
-    d.onclick=()=>abrirPropiedadExpensas(p.id); cont.appendChild(d);
-  });
-}
+/* ==============================
+   MODULO EXPENSAS MENSUALES
+================================ */
+let expPropiedades=[],expPropSeleccionada=null,expUnidades=[],expServicios=[],expServicioEditando=null;
+function mostrarModulo(modulo){const esAlq=modulo==='alquileres';document.getElementById('moduloAlquileres').classList.toggle('section-hidden',!esAlq);document.getElementById('moduloExpensas').classList.toggle('section-hidden',esAlq);document.getElementById('btnModuloAlquileres').classList.toggle('active',esAlq);document.getElementById('btnModuloExpensas').classList.toggle('active',!esAlq);if(!esAlq)cargarPropiedadesExpensas();else cargarAlqPropiedades();}
+async function cargarPropiedadesExpensas(){const cont=document.getElementById('listaExpensas');cont.innerHTML='<div class="loading">Cargando propiedades...</div>';const {data,error}=await db.from('exp_propiedades').select('*').order('created_at',{ascending:false});if(error){cont.innerHTML='<div class="empty">No se pudieron cargar.</div>';return;}expPropiedades=data||[];cont.innerHTML='';if(!expPropiedades.length){cont.innerHTML='<div class="empty">Todavía no hay propiedades de expensas.</div>';return;}expPropiedades.forEach(p=>{const d=document.createElement('div');d.className='property';d.innerHTML=`<div class="icon">🧾</div><div class="info"><strong>${esc(p.nombre)}</strong><small>${esc(p.localidad||'')}</small></div>`;d.onclick=()=>abrirPropiedadExpensas(p.id);cont.appendChild(d);});}
 function nuevaPropiedadExpensas(){document.getElementById('expPropNombre').value='';document.getElementById('expPropLocalidad').value='';abrir('modalExpPropiedad');}
-async function guardarPropiedadExpensas(){
- const nombre=document.getElementById('expPropNombre').value.trim(), localidad=document.getElementById('expPropLocalidad').value.trim();
- if(!nombre){alert('Ingresá el nombre o dirección.');return;}
- const {error}=await db.from('exp_propiedades').insert({nombre,localidad,user_id:usuario.id});
- if(error){alert('No se pudo guardar: '+error.message);return;} cerrar('modalExpPropiedad'); await cargarPropiedadesExpensas();
-}
-async function abrirPropiedadExpensas(id){
- expPropSeleccionada=id; const p=expPropiedades.find(x=>x.id===id); document.getElementById('expDetalleTitulo').innerText='🧾 '+(p?.nombre||'Expensas');
- await cargarDatosExpensas(); abrir('modalExpDetalle');
-}
-async function cargarDatosExpensas(){
- const [u,s]=await Promise.all([
-   db.from('exp_unidades').select('*').eq('propiedad_id',expPropSeleccionada).order('nombre'),
-   db.from('exp_servicios').select('*').eq('propiedad_id',expPropSeleccionada).order('fecha',{ascending:false})
- ]);
- expUnidades=u.data||[]; expServicios=s.data||[]; renderServiciosExp(); renderSelectorUF();
-}
-function renderServiciosExp(){
- const c=document.getElementById('tablaServiciosExp');
- if(!expServicios.length){c.innerHTML='<div class="empty">Todavía no hay servicios o impuestos.</div>';return;}
- c.innerHTML='<div class="exp-table-wrap"><table class="exp-table"><thead><tr><th>Fecha</th><th>Nombre</th><th>Cuenta</th><th>Valor</th><th></th></tr></thead><tbody>'+expServicios.map(x=>`<tr><td>${esc(x.fecha||'')}</td><td>${esc(x.nombre)}</td><td>${esc(x.numero_cuenta||'')}</td><td>${moneda(x.valor)}</td><td><button class="mini-btn danger-btn" onclick="eliminarServicioExp(${x.id})">Eliminar</button></td></tr>`).join('')+'</tbody></table></div>';
-}
-function renderSelectorUF(){
- const s=document.getElementById('selectorUF'); s.innerHTML='<option value="">Elegir...</option>'+expUnidades.map(u=>`<option value="${u.id}">${esc(u.nombre)}</option>`).join(''); document.getElementById('detalleUF').innerHTML='';
-}
+async function guardarPropiedadExpensas(){const nombre=document.getElementById('expPropNombre').value.trim(),localidad=document.getElementById('expPropLocalidad').value.trim();if(!nombre){alert('Ingresá el nombre o dirección.');return;}const {error}=await db.from('exp_propiedades').insert({nombre,localidad,user_id:usuario.id});if(error){alert('No se pudo guardar: '+error.message);return;}cerrar('modalExpPropiedad');await cargarPropiedadesExpensas();}
+async function abrirPropiedadExpensas(id){expPropSeleccionada=id;const p=expPropiedades.find(x=>x.id===id);document.getElementById('expDetalleTitulo').innerText='🧾 '+(p?.nombre||'Expensas');await cargarDatosExpensas();abrir('modalExpDetalle');}
+async function cargarDatosExpensas(){const [u,s]=await Promise.all([db.from('exp_unidades').select('*').eq('propiedad_id',expPropSeleccionada).order('nombre'),db.from('exp_servicios').select('*').eq('propiedad_id',expPropSeleccionada).order('mes',{ascending:false}).order('created_at',{ascending:false})]);expUnidades=u.data||[];expServicios=s.data||[];const f=document.getElementById('expFiltroMes');const actual=f.value;const meses=[...new Set(expServicios.map(x=>x.mes).filter(Boolean))].sort().reverse();f.innerHTML='<option value="">Todos los meses</option>'+meses.map(m=>`<option value="${m}">${m.slice(5,7)}/${m.slice(0,4)}</option>`).join('');f.value=meses.includes(actual)?actual:'';renderServiciosExp();renderSelectorUF();}
+function serviciosFiltrados(){const m=document.getElementById('expFiltroMes')?.value;return m?expServicios.filter(x=>x.mes===m):expServicios;}
+function renderServiciosExp(){const c=document.getElementById('tablaServiciosExp'),arr=serviciosFiltrados();if(!arr.length){c.innerHTML='<div class="empty">No hay servicios/impuestos para este período.</div>';return;}c.innerHTML='<div class="exp-table-wrap"><table class="exp-table"><thead><tr><th>Mes</th><th>Cuenta</th><th>Nombre</th><th>Valor</th><th>1° venc.</th><th>2° venc.</th><th>Acciones</th></tr></thead><tbody>'+arr.map(x=>`<tr><td>${esc(x.mes||'')}</td><td>${esc(x.numero_cuenta||'')}</td><td>${esc(x.nombre)}</td><td>${moneda(x.valor)}</td><td>${esc(x.primer_vencimiento||'')}</td><td>${esc(x.segundo_vencimiento||'')}</td><td><button class="mini-btn" onclick="editarServicioExp(${x.id})">Editar</button> <button class="mini-btn danger-btn" onclick="eliminarServicioExp(${x.id})">Eliminar</button></td></tr>`).join('')+'</tbody></table></div>';}
+function renderSelectorUF(){const s=document.getElementById('selectorUF');s.innerHTML='<option value="">Elegir...</option>'+expUnidades.map(u=>`<option value="${u.id}">${esc(u.nombre)}</option>`).join('');document.getElementById('detalleUF').innerHTML='';}
 function abrirUnidadExpensas(){document.getElementById('expUFNombre').value='';abrir('modalExpUnidad');}
-async function guardarUnidadExpensas(){
- const nombre=document.getElementById('expUFNombre').value.trim(); if(!nombre){alert('Ingresá el nombre de la unidad.');return;}
- const {error}=await db.from('exp_unidades').insert({propiedad_id:expPropSeleccionada,nombre,user_id:usuario.id});
- if(error){alert('No se pudo guardar: '+error.message);return;} cerrar('modalExpUnidad'); await cargarDatosExpensas();
-}
-function abrirServicioExpensas(){
- if(!expUnidades.length){alert('Primero agregá al menos una unidad funcional.');return;}
- document.getElementById('expServFecha').value=new Date().toISOString().slice(0,10); document.getElementById('expServNombre').value='';document.getElementById('expServCuenta').value='';document.getElementById('expServValor').value='';
- document.getElementById('expServUFs').innerHTML=expUnidades.map(u=>`<div class="check-row"><input type="checkbox" id="ufchk_${u.id}" onchange="actualizarAvisoPorcentajes()"><div style="flex:1">${esc(u.nombre)}</div><input class="percent-input" id="ufpct_${u.id}" type="number" min="0" max="100" step="0.01" placeholder="%" oninput="actualizarAvisoPorcentajes()"></div>`).join('');
- actualizarAvisoPorcentajes(); abrir('modalExpServicio');
-}
-function actualizarAvisoPorcentajes(){
- let total=0; expUnidades.forEach(u=>{if(document.getElementById('ufchk_'+u.id)?.checked) total+=Number(document.getElementById('ufpct_'+u.id)?.value||0);});
- const a=document.getElementById('expServAviso'); a.style.display='block'; a.style.background=Math.abs(total-100)<0.001?'#eaf8ef':'#fff0f0';a.style.color=Math.abs(total-100)<0.001?'#16804a':'#c62828';a.innerText='Porcentajes asignados: '+total.toLocaleString('es-AR')+'%'+(Math.abs(total-100)<0.001?' ✓':' — deben sumar 100%');
-}
-async function guardarServicioExpensas(){
- const fecha=document.getElementById('expServFecha').value,nombre=document.getElementById('expServNombre').value.trim(),numero_cuenta=document.getElementById('expServCuenta').value.trim(),valor=Number(document.getElementById('expServValor').value);
- if(!fecha||!nombre||!valor){alert('Completá fecha, nombre y valor.');return;}
- const asignaciones=[];let total=0; expUnidades.forEach(u=>{if(document.getElementById('ufchk_'+u.id).checked){const porcentaje=Number(document.getElementById('ufpct_'+u.id).value||0);total+=porcentaje;asignaciones.push({unidad_id:u.id,porcentaje});}});
- if(!asignaciones.length){alert('Seleccioná al menos una unidad funcional.');return;} if(Math.abs(total-100)>0.001){alert('Los porcentajes de las unidades incluidas deben sumar 100%.');return;}
- const {data,error}=await db.from('exp_servicios').insert({propiedad_id:expPropSeleccionada,fecha,nombre,numero_cuenta,valor,user_id:usuario.id}).select('id').single();
- if(error){alert('No se pudo guardar: '+error.message);return;}
- const filas=asignaciones.map(a=>({servicio_id:data.id,unidad_id:a.unidad_id,porcentaje:a.porcentaje,user_id:usuario.id})); const r=await db.from('exp_distribuciones').insert(filas);
- if(r.error){await db.from('exp_servicios').delete().eq('id',data.id);alert('No se pudo guardar la distribución: '+r.error.message);return;}
- cerrar('modalExpServicio'); await cargarDatosExpensas();
-}
-async function mostrarDetalleUF(){
- const id=Number(document.getElementById('selectorUF').value),c=document.getElementById('detalleUF'); if(!id){c.innerHTML='';return;}
- const uf=expUnidades.find(x=>Number(x.id)===id); const {data,error}=await db.from('exp_distribuciones').select('porcentaje,servicio_id').eq('unidad_id',id);
- if(error){c.innerHTML='<div class="empty">No se pudo calcular.</div>';return;}
- const filas=(data||[]).map(d=>{const s=expServicios.find(x=>Number(x.id)===Number(d.servicio_id));if(!s)return null;const importe=Number(s.valor)*Number(d.porcentaje)/100;return {...d,s,importe};}).filter(Boolean);
- const total=filas.reduce((a,x)=>a+x.importe,0);
- c.innerHTML=`<div class="exp-card"><h2>${esc(uf?.nombre||'Unidad')}</h2>${filas.length?'<div class="exp-table-wrap"><table class="exp-table"><thead><tr><th>Servicio / impuesto</th><th>Valor total</th><th>% UF</th><th>Importe UF</th></tr></thead><tbody>'+filas.map(x=>`<tr><td>${esc(x.s.nombre)}</td><td>${moneda(x.s.valor)}</td><td>${Number(x.porcentaje).toLocaleString('es-AR')}%</td><td><strong>${moneda(x.importe)}</strong></td></tr>`).join('')+'</tbody></table></div>':'<div class="empty">Esta unidad todavía no tiene servicios asignados.</div>'}<div class="total-box"><small>Total expensa de la unidad</small><br><strong>${moneda(total)}</strong></div></div>`;
-}
+async function guardarUnidadExpensas(){const nombre=document.getElementById('expUFNombre').value.trim();if(!nombre){alert('Ingresá el nombre de la unidad.');return;}const {error}=await db.from('exp_unidades').insert({propiedad_id:expPropSeleccionada,nombre,user_id:usuario.id});if(error){alert('No se pudo guardar: '+error.message);return;}cerrar('modalExpUnidad');await cargarDatosExpensas();}
+function renderAsignaciones(mapa={}){document.getElementById('expServUFs').innerHTML=expUnidades.map(u=>{const pct=mapa[u.id]??'';return `<div class="check-row"><input type="checkbox" id="ufchk_${u.id}" ${pct!==''?'checked':''} onchange="actualizarAvisoPorcentajes()"><div style="flex:1">${esc(u.nombre)}</div><input class="percent-input" id="ufpct_${u.id}" type="number" min="0" max="100" step="0.01" value="${pct}" placeholder="%" oninput="actualizarAvisoPorcentajes()"></div>`}).join('');actualizarAvisoPorcentajes();}
+async function abrirServicioExpensas(){if(!expUnidades.length){alert('Primero agregá al menos una unidad funcional.');return;}expServicioEditando=null;document.getElementById('expServTitulo').innerText='Agregar servicio / impuesto';document.getElementById('btnGuardarExpServicio').innerText='Guardar servicio / impuesto';const d=new Date();document.getElementById('expServMes').value=d.toISOString().slice(0,7);['expServCuenta','expServNombre','expServValor','expServVenc1','expServVenc2'].forEach(id=>document.getElementById(id).value='');renderAsignaciones();abrir('modalExpServicio');}
+async function cargarPorcentajesUltimoServicio(){const nombre=document.getElementById('expServNombre').value.trim().toLowerCase(),cuenta=document.getElementById('expServCuenta').value.trim();if(!nombre)return;const candidatos=expServicios.filter(x=>x.nombre?.trim().toLowerCase()===nombre && (!cuenta||x.numero_cuenta===cuenta)).sort((a,b)=>String(b.mes||'').localeCompare(String(a.mes||'')));if(!candidatos.length)return;const {data}=await db.from('exp_distribuciones').select('unidad_id,porcentaje').eq('servicio_id',candidatos[0].id);const mapa={};(data||[]).forEach(x=>mapa[x.unidad_id]=x.porcentaje);renderAsignaciones(mapa);}
+document.addEventListener('change',e=>{if(!expServicioEditando&&(e.target.id==='expServNombre'||e.target.id==='expServCuenta'))cargarPorcentajesUltimoServicio();});
+async function editarServicioExp(id){const x=expServicios.find(s=>s.id===id);if(!x)return;expServicioEditando=id;document.getElementById('expServTitulo').innerText='Editar servicio / impuesto';document.getElementById('btnGuardarExpServicio').innerText='Guardar cambios';document.getElementById('expServMes').value=x.mes||'';document.getElementById('expServCuenta').value=x.numero_cuenta||'';document.getElementById('expServNombre').value=x.nombre||'';document.getElementById('expServValor').value=x.valor||'';document.getElementById('expServVenc1').value=x.primer_vencimiento||'';document.getElementById('expServVenc2').value=x.segundo_vencimiento||'';const {data}=await db.from('exp_distribuciones').select('unidad_id,porcentaje').eq('servicio_id',id);const mapa={};(data||[]).forEach(a=>mapa[a.unidad_id]=a.porcentaje);renderAsignaciones(mapa);abrir('modalExpServicio');}
+function actualizarAvisoPorcentajes(){let total=0;expUnidades.forEach(u=>{if(document.getElementById('ufchk_'+u.id)?.checked)total+=Number(document.getElementById('ufpct_'+u.id)?.value||0)});const a=document.getElementById('expServAviso');if(!a)return;a.style.display='block';a.style.background=Math.abs(total-100)<.001?'#eaf8ef':'#fff0f0';a.style.color=Math.abs(total-100)<.001?'#16804a':'#c62828';a.innerText='Porcentajes asignados: '+total.toLocaleString('es-AR')+'%'+(Math.abs(total-100)<.001?' ✓':' — deben sumar 100%');}
+async function guardarServicioExpensas(){const mes=document.getElementById('expServMes').value,nombre=document.getElementById('expServNombre').value.trim(),numero_cuenta=document.getElementById('expServCuenta').value.trim(),valor=Number(document.getElementById('expServValor').value),primer_vencimiento=document.getElementById('expServVenc1').value||null,segundo_vencimiento=document.getElementById('expServVenc2').value||null;if(!mes||!nombre||!valor){alert('Completá mes, nombre y valor.');return;}const asignaciones=[];let total=0;expUnidades.forEach(u=>{if(document.getElementById('ufchk_'+u.id).checked){const porcentaje=Number(document.getElementById('ufpct_'+u.id).value||0);total+=porcentaje;asignaciones.push({unidad_id:u.id,porcentaje})}});if(!asignaciones.length||Math.abs(total-100)>.001){alert('Seleccioná las UF y asegurate de que los porcentajes sumen 100%.');return;}const row={propiedad_id:expPropSeleccionada,fecha:mes+'-01',mes,nombre,numero_cuenta,valor,primer_vencimiento,segundo_vencimiento,user_id:usuario.id};let id=expServicioEditando;if(id){const {error}=await db.from('exp_servicios').update(row).eq('id',id);if(error){alert(error.message);return;}await db.from('exp_distribuciones').delete().eq('servicio_id',id);}else{const {data,error}=await db.from('exp_servicios').insert(row).select('id').single();if(error){alert(error.message);return;}id=data.id;}const filas=asignaciones.map(a=>({servicio_id:id,unidad_id:a.unidad_id,porcentaje:a.porcentaje,user_id:usuario.id}));const r=await db.from('exp_distribuciones').insert(filas);if(r.error){alert('Servicio guardado, pero hubo un problema con porcentajes: '+r.error.message);return;}cerrar('modalExpServicio');await cargarDatosExpensas();}
+async function mostrarDetalleUF(){const id=Number(document.getElementById('selectorUF').value),c=document.getElementById('detalleUF');if(!id){c.innerHTML='';return;}const uf=expUnidades.find(x=>Number(x.id)===id);const {data,error}=await db.from('exp_distribuciones').select('porcentaje,servicio_id').eq('unidad_id',id);if(error){c.innerHTML='<div class="empty">No se pudo calcular.</div>';return;}const permitidos=new Set(serviciosFiltrados().map(x=>Number(x.id)));const filas=(data||[]).map(d=>{const s=expServicios.find(x=>Number(x.id)===Number(d.servicio_id));if(!s||!permitidos.has(Number(s.id)))return null;return {...d,s,importe:Number(s.valor)*Number(d.porcentaje)/100}}).filter(Boolean);const total=filas.reduce((a,x)=>a+x.importe,0);c.innerHTML=`<div class="exp-card"><h2>${esc(uf?.nombre||'Unidad')}</h2>${filas.length?'<div class="exp-table-wrap"><table class="exp-table"><thead><tr><th>Mes</th><th>Servicio</th><th>Valor total</th><th>% UF</th><th>Importe UF</th></tr></thead><tbody>'+filas.map(x=>`<tr><td>${esc(x.s.mes||'')}</td><td>${esc(x.s.nombre)}</td><td>${moneda(x.s.valor)}</td><td>${Number(x.porcentaje).toLocaleString('es-AR')}%</td><td><strong>${moneda(x.importe)}</strong></td></tr>`).join('')+'</tbody></table></div>':'<div class="empty">Esta unidad no tiene servicios en el período seleccionado.</div>'}<div class="total-box"><small>Total expensa de la unidad</small><br><strong>${moneda(total)}</strong></div></div>`;}
 function moneda(v){return Number(v||0).toLocaleString('es-AR',{style:'currency',currency:'ARS'});}
-async function eliminarServicioExp(id){if(!confirm('¿Eliminar este servicio/impuesto y su distribución?'))return;await db.from('exp_distribuciones').delete().eq('servicio_id',id);const {error}=await db.from('exp_servicios').delete().eq('id',id);if(error){alert('No se pudo eliminar.');return;}await cargarDatosExpensas();}
-async function eliminarPropiedadExpensas(){
- if(!confirm('¿Seguro que querés eliminar esta propiedad de expensas, sus unidades y servicios?'))return;
- const sid=expServicios.map(x=>x.id),uid=expUnidades.map(x=>x.id); if(sid.length)await db.from('exp_distribuciones').delete().in('servicio_id',sid); if(sid.length)await db.from('exp_servicios').delete().in('id',sid); if(uid.length)await db.from('exp_unidades').delete().in('id',uid);
- const {error}=await db.from('exp_propiedades').delete().eq('id',expPropSeleccionada);if(error){alert('No se pudo eliminar.');return;}cerrar('modalExpDetalle');await cargarPropiedadesExpensas();
-}
+async function eliminarServicioExp(id){if(!confirm('¿Eliminar este servicio/impuesto y su distribución?'))return;await db.from('exp_distribuciones').delete().eq('servicio_id',id);const {error}=await db.from('exp_servicios').delete().eq('id',id);if(error){alert(error.message);return;}await cargarDatosExpensas();}
+async function eliminarPropiedadExpensas(){if(!confirm('¿Seguro que querés eliminar esta propiedad de expensas, sus unidades y servicios?'))return;const sid=expServicios.map(x=>x.id),uid=expUnidades.map(x=>x.id);if(sid.length)await db.from('exp_distribuciones').delete().in('servicio_id',sid);if(sid.length)await db.from('exp_servicios').delete().in('id',sid);if(uid.length)await db.from('exp_unidades').delete().in('id',uid);const {error}=await db.from('exp_propiedades').delete().eq('id',expPropSeleccionada);if(error){alert(error.message);return;}cerrar('modalExpDetalle');await cargarPropiedadesExpensas();}
 
 /* ==============================
    COMPROBAR SESIÓN AL ABRIR
