@@ -677,12 +677,21 @@ Guardar pago
 <div class="modal-head"><h2 id="expDetalleTitulo">Expensas</h2><button class="close" onclick="cerrar('modalExpDetalle')">×</button></div>
 <div class="actions"><button class="blue" onclick="abrirServicioExpensas()">＋ Agregar servicio/impuesto</button><button class="grey" onclick="abrirUnidadExpensas()">＋ Agregar unidad funcional</button></div>
 <h2>Servicios / Impuestos</h2>
-<label>Ver historial por mes</label><select id="expFiltroMes" onchange="renderServiciosExp();renderSelectorUF()"><option value="">Todos los meses</option></select>
+<label>Ver historial por mes</label><select id="expFiltroMes" onchange="renderServiciosExp();renderSelectorUF()"><option value="">Todos los meses</option></select><div class="actions"><button class="blue" onclick="abrirLiquidacionExpensas()">📄 Generar liquidación mensual</button></div>
 <div id="tablaServiciosExp"></div>
 <h2>Unidades funcionales</h2>
 <label>Seleccionar unidad funcional</label><select id="selectorUF" onchange="mostrarDetalleUF()"><option value="">Elegir...</option></select>
 <div id="detalleUF"></div>
 <div class="actions"><button class="red" onclick="eliminarPropiedadExpensas()">Eliminar propiedad</button><button class="grey" onclick="cerrar('modalExpDetalle')">Cerrar</button></div>
+</div></div>
+
+
+<!-- EXPENSAS: LIQUIDACION MENSUAL -->
+<div class="modal" id="modalLiquidacionExp"><div class="box" style="max-width:900px">
+<div class="modal-head"><h2>📄 Liquidación mensual de expensas</h2><button class="close" onclick="cerrar('modalLiquidacionExp')">×</button></div>
+<div class="grid2"><div><label>Mes</label><select id="liqExpMes" onchange="generarLiquidacionExp()"></select></div><div><label>Unidad funcional</label><select id="liqExpUF" onchange="generarLiquidacionExp()"></select></div></div>
+<div id="liqExpContenido" style="margin-top:16px"></div>
+<div class="actions"><button class="blue" onclick="imprimirLiquidacionExp()">🖨️ Imprimir / Guardar PDF</button><button class="green" onclick="enviarLiquidacionWhatsApp()">📱 Enviar por WhatsApp</button><button class="grey" onclick="cerrar('modalLiquidacionExp')">Cerrar</button></div>
 </div></div>
 
 <!-- EXPENSAS: SERVICIO -->
