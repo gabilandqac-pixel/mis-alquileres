@@ -2445,13 +2445,32 @@ Por el pago del alquiler, escribime para coordinar.
 Vencimiento del alquiler: ${fechaAR(venc)}.
 
 Muchas gracias.`;
- const tel=String(u.telefono).replace(/\D/g,'');window.open(`https://wa.me/${tel}?text=${encodeURIComponent(texto)}`,'_blank');
+ let tel=String(u.telefono).replace(/\D/g,'');
+ // Normalización para WhatsApp Argentina: 549 + código de área + número, sin 0 ni 15.
+ if(tel.startsWith('00'))tel=tel.slice(2);
+ if(tel.startsWith('54'))tel=tel.slice(2);
+ if(tel.startsWith('0'))tel=tel.slice(1);
+ // Ej. 011 15 1234-5678 -> 11 12345678
+ if(tel.startsWith('11') && tel.slice(2).startsWith('15'))tel='11'+tel.slice(4);
+ tel='549'+tel;
+ const url=`https://wa.me/${tel}?text=${encodeURIComponent(texto)}`;
+ const w=window.open(url,'_blank');
+ if(!w)window.location.href=url;
 }
 async function abrirAumentoUnidad(){
  const u=alqUnidades.find(x=>x.id===alqUnidadEditando);if(!u)return;document.getElementById('aumTipo').value=u.tipo_ajuste||'IPC';document.getElementById('aumActual').value=moneda(u.precio);document.getElementById('aumPorcentaje').value='';document.getElementById('aumNuevo').value='';document.getElementById('aumUnidadInfo').innerText=`${u.nombre} · Próximo aumento: ${fechaAR(u.proximo_aumento)}`;document.getElementById('aumAviso').innerText='Consultando índice...';abrir('modalAumentoUnidad');await cargarHistorialAumentosUnidad();
  const tipo=(u.tipo_ajuste==='Promedio IPC/ICL')?'PROMEDIO':u.tipo_ajuste;if(!['IPC','ICL','PROMEDIO'].includes(tipo)){document.getElementById('aumAviso').innerText='Ingresá manualmente el porcentaje de aumento.';return;}
  const hasta=u.proximo_aumento||new Date().toISOString().slice(0,10);let desde=u.inicio;const {data:hist}=await db.from('alq_aumentos').select('fecha_aplicacion').eq('unidad_id',u.id).order('fecha_aplicacion',{ascending:false}).limit(1);if(hist?.[0]?.fecha_aplicacion)desde=hist[0].fecha_aplicacion;if(!desde){document.getElementById('aumAviso').innerText='Falta la fecha de inicio para calcular automáticamente.';return;}
- const {data,error}=await db.functions.invoke('quick-processor',{body:{tipo,fecha_desde:desde,fecha_hasta:hasta}});if(error||!data?.ok){document.getElementById('aumAviso').innerText='No se pudo obtener el índice automáticamente. Podés ingresar el porcentaje manualmente.';return;}document.getElementById('aumPorcentaje').value=data.porcentaje;document.getElementById('aumAviso').innerText='Índice calculado automáticamente. Revisalo antes de confirmar.';recalcularAumentoUnidad();
+ let desdeConsulta=desde;
+ // quick-processor calcula la variación entre meses. Para un contrato que comienza
+ // 01/05 y aumenta 01/09 hay que incluir mayo, junio, julio y agosto; por eso
+ // desplazamos un mes hacia atrás la fecha base enviada al procesador.
+ if(tipo==='IPC' || tipo==='PROMEDIO'){
+   const d0=new Date(desde+'T12:00:00');
+   d0.setMonth(d0.getMonth()-1);
+   desdeConsulta=`${d0.getFullYear()}-${String(d0.getMonth()+1).padStart(2,'0')}-${String(d0.getDate()).padStart(2,'0')}`;
+ }
+ const {data,error}=await db.functions.invoke('quick-processor',{body:{tipo,fecha_desde:desdeConsulta,fecha_hasta:hasta}});if(error||!data?.ok){document.getElementById('aumAviso').innerText='No se pudo obtener el índice automáticamente. Podés ingresar el porcentaje manualmente.';return;}document.getElementById('aumPorcentaje').value=data.porcentaje;document.getElementById('aumAviso').innerText=`Índice calculado para ${fechaAR(desde)} a ${fechaAR(hasta)}. Revisalo antes de confirmar.`;recalcularAumentoUnidad();
 }
 function recalcularAumentoUnidad(){const u=alqUnidades.find(x=>x.id===alqUnidadEditando);if(!u)return;const pct=Number(String(document.getElementById('aumPorcentaje').value).replace(',','.'));document.getElementById('aumNuevo').value=Number.isFinite(pct)?moneda(Number(u.precio||0)*(1+pct/100)):'';}
 async function confirmarAumentoUnidad(){
