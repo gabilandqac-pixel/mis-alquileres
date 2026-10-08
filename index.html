@@ -2308,7 +2308,34 @@ async function cargarHistorialCuenta(){
  const {data,error}=await db.from('alq_cuentas_mensuales').select('*').eq('user_id',usuario.id).eq('unidad_id',alqUnidadEditando).order('mes',{ascending:false});
  if(error){console.error('Historial cuenta corriente:',error);c.innerHTML='<div class="empty">No se pudo cargar el historial: '+esc(error.message||'error desconocido')+'</div>';return;}
  if(!data||!data.length){c.innerHTML='<div class="empty">Todavía no hay meses guardados. Elegí un mes y tocá “Guardar mes en cuenta corriente”.</div>';return;}
- c.innerHTML='<div class="muted" style="margin-bottom:8px">'+data.length+' mes'+(data.length===1?'':'es')+' guardado'+(data.length===1?'':'s')+'</div>'+data.map(x=>`<div class="exp-card" style="cursor:pointer" onclick="document.getElementById('ctaMes').value='${x.mes}';cargarCuentaMensual()"><strong>${new Intl.DateTimeFormat('es-AR',{month:'long',year:'numeric'}).format(new Date(x.mes+'-01T12:00:00'))} · ${esc(x.estado||'Pendiente')}</strong><small>Alquiler ${moneda(x.alquiler)} + Expensas ${moneda(x.expensas)}</small><div><b>Total ${moneda(x.total)}</b>${x.fecha_pago?' · Pagado '+fechaAR(x.fecha_pago):''}</div>${x.observaciones?`<small>${esc(x.observaciones)}</small>`:''}</div>`).join('');
+ c.innerHTML='<div class="muted" style="margin-bottom:8px">'+data.length+' mes'+(data.length===1?'':'es')+' guardado'+(data.length===1?'':'s')+'</div>'+data.map(x=>`<div class="exp-card"><strong>${new Intl.DateTimeFormat('es-AR',{month:'long',year:'numeric'}).format(new Date(x.mes+'-01T12:00:00'))} · ${esc(x.estado||'Pendiente')}</strong><small>Alquiler ${moneda(x.alquiler)} + Expensas ${moneda(x.expensas)}</small><div><b>Total ${moneda(x.total)}</b>${x.fecha_pago?' · Pagado '+fechaAR(x.fecha_pago):''}</div>${x.observaciones?`<small>${esc(x.observaciones)}</small>`:''}<div class="actions"><button class="mini-btn" onclick="editarMesHistorico('${x.mes}')">✏️ Editar</button><button class="mini-btn danger-btn" onclick="eliminarMesHistorico('${x.mes}')">🗑️ Eliminar</button></div></div>`).join('');
+
+}
+// Edición independiente de importes históricos; no altera otros períodos ni el precio vigente.
+async function editarMesHistorico(mes){
+ if(!usuario||!alqUnidadEditando)return;
+ const {data:x,error}=await db.from('alq_cuentas_mensuales').select('*').eq('user_id',usuario.id).eq('unidad_id',alqUnidadEditando).eq('mes',mes).maybeSingle();
+ if(error||!x){alert('No se pudo recuperar el mes: '+(error?.message||'No existe'));return;}
+ const pedirNumero=(etiqueta,actual)=>{const entrada=prompt(etiqueta+' ('+mes+')',String(Number(actual||0)));if(entrada===null)return null;const n=Number(entrada.trim().replace(/\./g,'').replace(',','.'));if(!entrada.trim()||!Number.isFinite(n)||n<0){alert('Ingresá un importe válido (ejemplo: 1858305,20).');return null;}return Math.round(n*100)/100;};
+ const alquiler=pedirNumero('Alquiler',x.alquiler);if(alquiler===null)return;
+ const expensas=pedirNumero('Expensas',x.expensas);if(expensas===null)return;
+ const estado=prompt('Estado: Pagado, Pendiente o Atrasado',x.estado||'Pendiente');if(estado===null)return;
+ const estadoFinal=['Pagado','Pendiente','Atrasado'].find(e=>e.toLowerCase()===estado.trim().toLowerCase());if(!estadoFinal){alert('Estado inválido.');return;}
+ const fecha=prompt('Fecha de pago (AAAA-MM-DD), o vacío si no pagó',x.fecha_pago||'');if(fecha===null)return;
+ if(fecha.trim()&&!/^\d{4}-\d{2}-\d{2}$/.test(fecha.trim())){alert('Usá el formato AAAA-MM-DD.');return;}
+ const obs=prompt('Observaciones',x.observaciones||'');if(obs===null)return;
+ const total=Math.round((alquiler+expensas)*100)/100;
+ if(!confirm('Guardar corrección de '+mes+'?\nAlquiler: '+moneda(alquiler)+'\nExpensas: '+moneda(expensas)+'\nTotal: '+moneda(total)))return;
+ const {error:err}=await db.from('alq_cuentas_mensuales').update({alquiler,expensas,total,estado:estadoFinal,fecha_pago:fecha.trim()||null,observaciones:obs,updated_at:new Date().toISOString()}).eq('user_id',usuario.id).eq('unidad_id',alqUnidadEditando).eq('mes',mes);
+ if(err){alert('No se pudo actualizar: '+err.message);return;}
+ await cargarHistorialCuenta();if(document.getElementById('ctaMes').value===mes)await cargarCuentaMensual();alert('Mes actualizado.');
+}
+async function eliminarMesHistorico(mes){
+ if(!usuario||!alqUnidadEditando)return;
+ if(!confirm('¿Eliminar la cuenta corriente de '+mes+'? Esta acción no se puede deshacer.'))return;
+ const {error}=await db.from('alq_cuentas_mensuales').delete().eq('user_id',usuario.id).eq('unidad_id',alqUnidadEditando).eq('mes',mes);
+ if(error){alert('No se pudo eliminar: '+error.message);return;}
+ await cargarHistorialCuenta();if(document.getElementById('ctaMes').value===mes)await cargarCuentaMensual();alert('Mes eliminado.');
 }
 async function eliminarAlqUnidad(){if(!alqUnidadEditando||!confirm('¿Eliminar esta unidad?'))return;const {error}=await db.from('alq_unidades').delete().eq('id',alqUnidadEditando);if(error){alert(error.message);return;}cerrar('modalAlqUnidad');await cargarAlqUnidades();}
 async function eliminarAlqPropiedad(){if(!confirm('¿Eliminar esta propiedad y todas sus unidades?'))return;const {error}=await db.from('alq_propiedades').delete().eq('id',alqPropSeleccionada);if(error){alert(error.message);return;}cerrar('modalAlqDetalle');await cargarAlqPropiedades();}
