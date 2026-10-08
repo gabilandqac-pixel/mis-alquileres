@@ -418,6 +418,7 @@ Salir
 </div>
 
 <section id="moduloAlquileres">
+<div id="alqAlertasV5" class="alerts" style="margin-bottom:14px"></div>
 <button class="primary" onclick="nuevaAlqPropiedad()">＋ Agregar propiedad</button>
 <h2>Propiedades</h2>
 <div id="listaAlqPropiedades"><div class="loading">Cargando propiedades...</div></div>
@@ -750,6 +751,7 @@ Guardar pago
 <label>Tipo de ajuste</label><select id="auAjuste"><option>IPC</option><option>ICL</option><option>Promedio IPC/ICL</option><option>Fijo</option></select>
 <label>Período de ajuste</label><select id="auPeriodo"><option value="1">Cada 1 mes</option><option value="2">Cada 2 meses</option><option value="3" selected>Cada 3 meses</option><option value="4">Cada 4 meses</option><option value="6">Cada 6 meses</option><option value="12">Cada 12 meses</option></select>
 <label>Fin de contrato</label><input id="auFin" type="date">
+<label>Día de vencimiento del alquiler</label><input id="auVencDia" type="number" min="1" max="31" value="10" placeholder="Ej: 10">
 <label>Factura</label><select id="auFactura"><option value="false">No</option><option value="true">Sí</option></select>
 <h2>Servicios</h2>
 <label>Edesur - número de cliente/cuenta</label><input id="auEdesur">
@@ -757,7 +759,7 @@ Guardar pago
 <h2>Expensas</h2>
 <label>Asignar Unidad Funcional (UF)</label><select id="auExpUF"><option value="">Sin asignar</option></select>
 <button class="primary" onclick="guardarAlqUnidad()">Guardar unidad</button>
-<div class="actions"><button id="btnCuentaAlqUnidad" class="blue" style="display:none" onclick="abrirCuentaMensual()">💰 Cuenta corriente</button><button id="btnEliminarAlqUnidad" class="red" style="display:none" onclick="eliminarAlqUnidad()">Eliminar unidad</button></div>
+<div class="actions"><button id="btnCuentaAlqUnidad" class="blue" style="display:none" onclick="abrirCuentaMensual()">💰 Cuenta corriente</button><button id="btnAumentoAlqUnidad" class="grey" style="display:none" onclick="abrirAumentoUnidad()">📈 Calcular aumento</button><button id="btnEliminarAlqUnidad" class="red" style="display:none" onclick="eliminarAlqUnidad()">Eliminar unidad</button></div>
 </div></div>
 
 <!-- CUENTA CORRIENTE MENSUAL -->
@@ -768,8 +770,21 @@ Guardar pago
 <label>Fecha de pago</label><input id="ctaFechaPago" type="date">
 <label>Observaciones</label><textarea id="ctaObs" rows="3" placeholder="Opcional"></textarea>
 <div id="ctaAviso" class="notice" style="margin-top:12px"></div>
-<div class="actions"><button class="primary" onclick="guardarCuentaMensual()">Guardar mes</button><button class="grey" onclick="cerrar('modalCuentaMensual')">Cerrar</button></div>
+<div class="actions"><button class="primary" onclick="guardarCuentaMensual()">Guardar mes</button><button class="grey" onclick="imprimirCuentaMensual()">🖨️ Imprimir / PDF</button><button class="green" onclick="enviarRecordatorioCuentaWhatsApp()">📱 WhatsApp</button><button class="grey" onclick="cerrar('modalCuentaMensual')">Cerrar</button></div>
 <h2>Historial</h2><div id="ctaHistorial"></div>
+</div></div>
+
+<!-- AUMENTO DE ALQUILER V5 -->
+<div class="modal" id="modalAumentoUnidad"><div class="box" style="max-width:620px">
+<div class="modal-head"><h2>📈 Calcular aumento</h2><button class="close" onclick="cerrar('modalAumentoUnidad')">×</button></div>
+<div id="aumUnidadInfo" class="notice"></div>
+<label>Tipo de ajuste</label><input id="aumTipo" readonly>
+<label>Alquiler actual</label><input id="aumActual" readonly>
+<label>Porcentaje de aumento</label><input id="aumPorcentaje" type="number" step="0.0001" oninput="recalcularAumentoUnidad()">
+<label>Nuevo alquiler</label><input id="aumNuevo" readonly>
+<div id="aumAviso" class="notice"></div>
+<div class="actions"><button class="primary" onclick="confirmarAumentoUnidad()">Confirmar y aplicar aumento</button><button class="grey" onclick="cerrar('modalAumentoUnidad')">Cancelar</button></div>
+<h2>Historial de aumentos</h2><div id="aumHistorial"></div>
 </div></div>
 
 <script>
@@ -2270,15 +2285,16 @@ async function cargarAlqPropiedades(){
  alqPropiedades=data||[];
  c.innerHTML=alqPropiedades.length?'':'<div class="empty">Todavía no hay propiedades en la nueva estructura.</div>';
  alqPropiedades.forEach(p=>{const d=document.createElement('div');d.className='property';d.innerHTML=`<div class="icon">🏢</div><div class="info"><strong>${esc(p.nombre)}</strong><small>${esc(p.localidad||'')}</small></div>`;d.onclick=()=>abrirAlqPropiedad(p.id);c.appendChild(d);});
+ await renderAlertasAlquilerV5();
 }
 function nuevaAlqPropiedad(){document.getElementById('alqPropNombre').value='';document.getElementById('alqPropLocalidad').value='';abrir('modalAlqProp');}
 async function guardarAlqPropiedad(){const nombre=document.getElementById('alqPropNombre').value.trim(),localidad=document.getElementById('alqPropLocalidad').value.trim();if(!nombre){alert('Ingresá el nombre o dirección.');return;}const {error}=await db.from('alq_propiedades').insert({user_id:usuario.id,nombre,localidad});if(error){alert(error.message);return;}cerrar('modalAlqProp');await cargarAlqPropiedades();}
 async function abrirAlqPropiedad(id){alqPropSeleccionada=id;const p=alqPropiedades.find(x=>x.id===id);document.getElementById('alqDetalleTitulo').innerText='🏢 '+(p?.nombre||'Propiedad');await cargarAlqUnidades();abrir('modalAlqDetalle');}
 async function cargarAlqUnidades(){const {data,error}=await db.from('alq_unidades').select('*').eq('propiedad_id',alqPropSeleccionada).order('nombre');alqUnidades=data||[];const c=document.getElementById('listaAlqUnidades');if(error){c.innerHTML='<div class="empty">No se pudieron cargar las unidades.</div>';return;}if(!alqUnidades.length){c.innerHTML='<div class="empty">Todavía no hay unidades.</div>';return;}c.innerHTML=alqUnidades.map(u=>`<div class="exp-card" style="cursor:pointer" onclick="editarAlqUnidad(${u.id})"><strong>${esc(u.nombre)}</strong><small>${esc(u.destino||'')} · ${esc(u.inquilino_nombre||'Sin inquilino')}</small><div><b>${moneda(u.precio)}</b> ${u.factura?' · Factura':' · No factura'}</div></div>`).join('');}
 async function cargarUFParaUnidad(sel=''){const s=document.getElementById('auExpUF');s.innerHTML='<option value="">Sin asignar</option>';const {data}=await db.from('exp_unidades').select('id,nombre,propiedad_id').order('nombre');(data||[]).forEach(u=>{const o=document.createElement('option');o.value=u.id;o.textContent=u.nombre;s.appendChild(o)});s.value=sel||'';}
-async function nuevaAlqUnidad(){alqUnidadEditando=null;document.getElementById('alqUnidadTitulo').innerText='Nueva unidad';['auNombre','auInquilino','auDocumento','auTelefono','auEmail','auPrecio','auInicio','auProx','auFin','auEdesur','auMetrogas'].forEach(id=>document.getElementById(id).value='');document.getElementById('auDestino').value='Vivienda';document.getElementById('auAjuste').value='IPC';document.getElementById('auPeriodo').value='3';document.getElementById('auFactura').value='false';document.getElementById('btnEliminarAlqUnidad').style.display='none';document.getElementById('btnCuentaAlqUnidad').style.display='none';await cargarUFParaUnidad();abrir('modalAlqUnidad');}
-async function editarAlqUnidad(id){const u=alqUnidades.find(x=>x.id===id);if(!u)return;alqUnidadEditando=id;document.getElementById('alqUnidadTitulo').innerText='Editar unidad';const vals={auNombre:u.nombre,auDestino:u.destino,auInquilino:u.inquilino_nombre,auDocumento:u.inquilino_documento,auTelefono:u.telefono,auEmail:u.email,auPrecio:u.precio,auInicio:u.inicio,auProx:u.proximo_aumento,auAjuste:u.tipo_ajuste,auPeriodo:u.periodo_ajuste,auFin:u.fin_contrato,auEdesur:u.edesur,auMetrogas:u.metrogas};Object.entries(vals).forEach(([id,v])=>document.getElementById(id).value=v??'');document.getElementById('auFactura').value=String(!!u.factura);document.getElementById('btnEliminarAlqUnidad').style.display='inline-block';document.getElementById('btnCuentaAlqUnidad').style.display='inline-block';await cargarUFParaUnidad(u.exp_uf_id);abrir('modalAlqUnidad');}
-async function guardarAlqUnidad(){const row={user_id:usuario.id,propiedad_id:alqPropSeleccionada,nombre:document.getElementById('auNombre').value.trim(),destino:document.getElementById('auDestino').value,inquilino_nombre:document.getElementById('auInquilino').value.trim(),inquilino_documento:document.getElementById('auDocumento').value.trim(),telefono:document.getElementById('auTelefono').value.trim(),email:document.getElementById('auEmail').value.trim(),precio:Number(document.getElementById('auPrecio').value||0),inicio:document.getElementById('auInicio').value||null,proximo_aumento:document.getElementById('auProx').value||null,tipo_ajuste:document.getElementById('auAjuste').value,periodo_ajuste:Number(document.getElementById('auPeriodo').value),fin_contrato:document.getElementById('auFin').value||null,factura:document.getElementById('auFactura').value==='true',edesur:document.getElementById('auEdesur').value.trim(),metrogas:document.getElementById('auMetrogas').value.trim(),exp_uf_id:Number(document.getElementById('auExpUF').value)||null};if(!row.nombre){alert('Ingresá el nombre de la unidad.');return;}const q=alqUnidadEditando?db.from('alq_unidades').update(row).eq('id',alqUnidadEditando):db.from('alq_unidades').insert(row);const {error}=await q;if(error){alert('No se pudo guardar: '+error.message);return;}cerrar('modalAlqUnidad');await cargarAlqUnidades();}
+async function nuevaAlqUnidad(){alqUnidadEditando=null;document.getElementById('alqUnidadTitulo').innerText='Nueva unidad';['auNombre','auInquilino','auDocumento','auTelefono','auEmail','auPrecio','auInicio','auProx','auFin','auEdesur','auMetrogas'].forEach(id=>document.getElementById(id).value='');document.getElementById('auDestino').value='Vivienda';document.getElementById('auAjuste').value='IPC';document.getElementById('auPeriodo').value='3';document.getElementById('auFactura').value='false';document.getElementById('btnEliminarAlqUnidad').style.display='none';document.getElementById('btnCuentaAlqUnidad').style.display='none';document.getElementById('btnAumentoAlqUnidad').style.display='none';document.getElementById('auVencDia').value='10';await cargarUFParaUnidad();abrir('modalAlqUnidad');}
+async function editarAlqUnidad(id){const u=alqUnidades.find(x=>x.id===id);if(!u)return;alqUnidadEditando=id;document.getElementById('alqUnidadTitulo').innerText='Editar unidad';const vals={auNombre:u.nombre,auDestino:u.destino,auInquilino:u.inquilino_nombre,auDocumento:u.inquilino_documento,auTelefono:u.telefono,auEmail:u.email,auPrecio:u.precio,auInicio:u.inicio,auProx:u.proximo_aumento,auAjuste:u.tipo_ajuste,auPeriodo:u.periodo_ajuste,auFin:u.fin_contrato,auEdesur:u.edesur,auMetrogas:u.metrogas,auVencDia:u.dia_vencimiento_alquiler||10};Object.entries(vals).forEach(([id,v])=>document.getElementById(id).value=v??'');document.getElementById('auFactura').value=String(!!u.factura);document.getElementById('btnEliminarAlqUnidad').style.display='inline-block';document.getElementById('btnCuentaAlqUnidad').style.display='inline-block';document.getElementById('btnAumentoAlqUnidad').style.display='inline-block';await cargarUFParaUnidad(u.exp_uf_id);abrir('modalAlqUnidad');}
+async function guardarAlqUnidad(){const row={user_id:usuario.id,propiedad_id:alqPropSeleccionada,nombre:document.getElementById('auNombre').value.trim(),destino:document.getElementById('auDestino').value,inquilino_nombre:document.getElementById('auInquilino').value.trim(),inquilino_documento:document.getElementById('auDocumento').value.trim(),telefono:document.getElementById('auTelefono').value.trim(),email:document.getElementById('auEmail').value.trim(),precio:Number(document.getElementById('auPrecio').value||0),inicio:document.getElementById('auInicio').value||null,proximo_aumento:document.getElementById('auProx').value||null,tipo_ajuste:document.getElementById('auAjuste').value,periodo_ajuste:Number(document.getElementById('auPeriodo').value),fin_contrato:document.getElementById('auFin').value||null,factura:document.getElementById('auFactura').value==='true',edesur:document.getElementById('auEdesur').value.trim(),metrogas:document.getElementById('auMetrogas').value.trim(),dia_vencimiento_alquiler:Number(document.getElementById('auVencDia').value||10),exp_uf_id:Number(document.getElementById('auExpUF').value)||null};if(!row.nombre){alert('Ingresá el nombre de la unidad.');return;}const q=alqUnidadEditando?db.from('alq_unidades').update(row).eq('id',alqUnidadEditando):db.from('alq_unidades').insert(row);const {error}=await q;if(error){alert('No se pudo guardar: '+error.message);return;}cerrar('modalAlqUnidad');await cargarAlqUnidades();}
 function mesActualLocal(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
 async function calcularExpensasUFMes(ufId,mes){if(!ufId||!mes)return 0;const {data:servs,error:e1}=await db.from('exp_servicios').select('id,valor').eq('mes',mes);if(e1||!servs?.length)return 0;const ids=servs.map(x=>x.id);const {data:dist,error:e2}=await db.from('exp_distribuciones').select('servicio_id,porcentaje').eq('unidad_id',ufId).in('servicio_id',ids);if(e2)return 0;const mapa=Object.fromEntries(servs.map(x=>[x.id,Number(x.valor||0)]));return (dist||[]).reduce((t,d)=>t+(mapa[d.servicio_id]||0)*Number(d.porcentaje||0)/100,0);}
 async function abrirCuentaMensual(){if(!alqUnidadEditando)return;const u=alqUnidades.find(x=>x.id===alqUnidadEditando);if(!u)return;document.getElementById('ctaTitulo').innerText='💰 Cuenta corriente · '+u.nombre;document.getElementById('ctaMes').value=mesActualLocal();abrir('modalCuentaMensual');await cargarCuentaMensual();await cargarHistorialCuenta();}
@@ -2391,6 +2407,63 @@ function enviarLiquidacionWhatsApp(){
   t+=`\nTOTAL EXPENSAS: ${moneda(l.total)}`;
   window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank');
 }
+
+/* ==============================
+   V5: VENCIMIENTOS, ALERTAS, CUENTA E AUMENTOS
+================================ */
+function fechaVencAlquilerMes(mes,dia){const [y,m]=mes.split('-').map(Number);const ultimo=new Date(y,m,0).getDate();return `${y}-${String(m).padStart(2,'0')}-${String(Math.min(Number(dia)||10,ultimo)).padStart(2,'0')}`;}
+async function renderAlertasAlquilerV5(){
+ const c=document.getElementById('alqAlertasV5');if(!c)return;
+ const {data}=await db.from('alq_unidades').select('id,nombre,inquilino_nombre,proximo_aumento,fin_contrato,propiedad_id');const us=data||[];
+ const hoy=new Date();hoy.setHours(0,0,0,0);const en45=new Date(hoy);en45.setDate(en45.getDate()+45);
+ const aum=us.filter(u=>u.proximo_aumento&&new Date(u.proximo_aumento+'T12:00:00')<=en45).sort((a,b)=>String(a.proximo_aumento).localeCompare(String(b.proximo_aumento)));
+ const fin=us.filter(u=>u.fin_contrato&&new Date(u.fin_contrato+'T12:00:00')<=en45).sort((a,b)=>String(a.fin_contrato).localeCompare(String(b.fin_contrato)));
+ let html='';if(aum.length)html+=`<div class="alert"><strong>📈 Aumentos próximos</strong><br>${aum.slice(0,8).map(u=>`${esc(u.nombre)}: ${fechaAR(u.proximo_aumento)}`).join(' · ')}</div>`;
+ if(fin.length)html+=`<div class="alert"><strong>📅 Contratos por finalizar</strong><br>${fin.slice(0,8).map(u=>`${esc(u.nombre)}: ${fechaAR(u.fin_contrato)}`).join(' · ')}</div>`;
+ c.innerHTML=html||'<div class="notice">Sin aumentos ni finalizaciones de contrato en los próximos 45 días.</div>';
+}
+async function imprimirCuentaMensual(){
+ if(!alqUnidadEditando)return;const u=alqUnidades.find(x=>x.id===alqUnidadEditando);const p=alqPropiedades.find(x=>x.id===alqPropSeleccionada);const mes=document.getElementById('ctaMes').value;if(!u||!mes)return;
+ const alquiler=Number(document.getElementById('ctaAlquiler').dataset.valor||0),expensas=Number(document.getElementById('ctaExpensas').dataset.valor||0),total=Number(document.getElementById('ctaTotal').dataset.valor||0),estado=document.getElementById('ctaEstado').value;const venc=fechaVencAlquilerMes(mes,u.dia_vencimiento_alquiler);
+ const html=`<h1>Cuenta corriente</h1><p><b>Propiedad:</b> ${esc(p?.nombre||'')}</p><p><b>Unidad:</b> ${esc(u.nombre)} · <b>Inquilino:</b> ${esc(u.inquilino_nombre||'')}</p><p><b>Período:</b> ${esc(mesBonito(mes))}</p><table><tr><th>Concepto</th><th>Importe</th><th>Vencimiento</th></tr><tr><td>Alquiler</td><td>${moneda(alquiler)}</td><td>${fechaAR(venc)}</td></tr><tr><td>Expensas</td><td>${moneda(expensas)}</td><td>Del 1 al 5</td></tr></table><h2>Total a cobrar: ${moneda(total)}</h2><p><b>Estado:</b> ${esc(estado)}</p><p>Las expensas se abonan del 1 al 5 a <b>exp.mp</b>.</p>`;
+ const w=window.open('','_blank','width=900,height=700');if(!w){alert('Permití ventanas emergentes para imprimir.');return;}w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Cuenta corriente</title><style>body{font-family:Arial;padding:32px;color:#111}table{width:100%;border-collapse:collapse;margin:20px 0}th,td{padding:10px;border-bottom:1px solid #ddd;text-align:left}</style></head><body>${html}<script>window.onload=()=>window.print()<\/script></body></html>`);w.document.close();
+}
+function enviarRecordatorioCuentaWhatsApp(){
+ const u=alqUnidades.find(x=>x.id===alqUnidadEditando);const mes=document.getElementById('ctaMes').value;if(!u||!mes)return;if(!u.telefono){alert('Esta unidad no tiene teléfono del inquilino cargado.');return;}
+ const alquiler=Number(document.getElementById('ctaAlquiler').dataset.valor||0),expensas=Number(document.getElementById('ctaExpensas').dataset.valor||0),total=Number(document.getElementById('ctaTotal').dataset.valor||0),venc=fechaVencAlquilerMes(mes,u.dia_vencimiento_alquiler);
+ const nombre=u.inquilino_nombre||'Hola';const texto=`Hola ${nombre}.
+
+Te recordamos el pago correspondiente a ${mesBonito(mes)}:
+
+Alquiler: ${moneda(alquiler)}
+Expensas: ${moneda(expensas)}
+Total: ${moneda(total)}
+
+Las expensas se abonan del 1 al 5 a exp.mp.
+
+Por el pago del alquiler, escribime para coordinar.
+Vencimiento del alquiler: ${fechaAR(venc)}.
+
+Muchas gracias.`;
+ const tel=String(u.telefono).replace(/\D/g,'');window.open(`https://wa.me/${tel}?text=${encodeURIComponent(texto)}`,'_blank');
+}
+async function abrirAumentoUnidad(){
+ const u=alqUnidades.find(x=>x.id===alqUnidadEditando);if(!u)return;document.getElementById('aumTipo').value=u.tipo_ajuste||'IPC';document.getElementById('aumActual').value=moneda(u.precio);document.getElementById('aumPorcentaje').value='';document.getElementById('aumNuevo').value='';document.getElementById('aumUnidadInfo').innerText=`${u.nombre} · Próximo aumento: ${fechaAR(u.proximo_aumento)}`;document.getElementById('aumAviso').innerText='Consultando índice...';abrir('modalAumentoUnidad');await cargarHistorialAumentosUnidad();
+ const tipo=(u.tipo_ajuste==='Promedio IPC/ICL')?'PROMEDIO':u.tipo_ajuste;if(!['IPC','ICL','PROMEDIO'].includes(tipo)){document.getElementById('aumAviso').innerText='Ingresá manualmente el porcentaje de aumento.';return;}
+ const hasta=u.proximo_aumento||new Date().toISOString().slice(0,10);let desde=u.inicio;const {data:hist}=await db.from('alq_aumentos').select('fecha_aplicacion').eq('unidad_id',u.id).order('fecha_aplicacion',{ascending:false}).limit(1);if(hist?.[0]?.fecha_aplicacion)desde=hist[0].fecha_aplicacion;if(!desde){document.getElementById('aumAviso').innerText='Falta la fecha de inicio para calcular automáticamente.';return;}
+ const {data,error}=await db.functions.invoke('quick-processor',{body:{tipo,fecha_desde:desde,fecha_hasta:hasta}});if(error||!data?.ok){document.getElementById('aumAviso').innerText='No se pudo obtener el índice automáticamente. Podés ingresar el porcentaje manualmente.';return;}document.getElementById('aumPorcentaje').value=data.porcentaje;document.getElementById('aumAviso').innerText='Índice calculado automáticamente. Revisalo antes de confirmar.';recalcularAumentoUnidad();
+}
+function recalcularAumentoUnidad(){const u=alqUnidades.find(x=>x.id===alqUnidadEditando);if(!u)return;const pct=Number(String(document.getElementById('aumPorcentaje').value).replace(',','.'));document.getElementById('aumNuevo').value=Number.isFinite(pct)?moneda(Number(u.precio||0)*(1+pct/100)):'';}
+async function confirmarAumentoUnidad(){
+ const u=alqUnidades.find(x=>x.id===alqUnidadEditando);if(!u)return;const pct=Number(String(document.getElementById('aumPorcentaje').value).replace(',','.'));if(!Number.isFinite(pct)||pct<0){alert('Ingresá un porcentaje válido.');return;}const anterior=Number(u.precio||0),nuevo=Math.round(anterior*(1+pct/100)*100)/100;const fecha=u.proximo_aumento||new Date().toISOString().slice(0,10);const base=new Date(fecha+'T12:00:00');base.setMonth(base.getMonth()+(Number(u.periodo_ajuste)||3));const prox=`${base.getFullYear()}-${String(base.getMonth()+1).padStart(2,'0')}-${String(base.getDate()).padStart(2,'0')}`;if(!confirm(`¿Aplicar aumento?
+
+Anterior: ${moneda(anterior)}
+Aumento: ${pct.toLocaleString('es-AR')}%
+Nuevo: ${moneda(nuevo)}
+Próximo aumento: ${fechaAR(prox)}`))return;
+ const tipo=u.tipo_ajuste||'IPC';const ins=await db.from('alq_aumentos').insert({user_id:usuario.id,unidad_id:u.id,fecha_aplicacion:fecha,tipo_ajuste:tipo,periodo_meses:Number(u.periodo_ajuste)||3,precio_anterior:anterior,porcentaje:pct,precio_nuevo:nuevo});if(ins.error){alert(ins.error.message);return;}const up=await db.from('alq_unidades').update({precio:nuevo,proximo_aumento:prox}).eq('id',u.id);if(up.error){alert(up.error.message);return;}u.precio=nuevo;u.proximo_aumento=prox;document.getElementById('auPrecio').value=nuevo;document.getElementById('auProx').value=prox;alert('Aumento aplicado correctamente.');cerrar('modalAumentoUnidad');await cargarAlqUnidades();await renderAlertasAlquilerV5();
+}
+async function cargarHistorialAumentosUnidad(){const c=document.getElementById('aumHistorial');const {data}=await db.from('alq_aumentos').select('*').eq('unidad_id',alqUnidadEditando).order('fecha_aplicacion',{ascending:false});c.innerHTML=data?.length?data.map(x=>`<div class="exp-card"><strong>${fechaAR(x.fecha_aplicacion)} · ${esc(x.tipo_ajuste)}</strong><small>${moneda(x.precio_anterior)} + ${Number(x.porcentaje).toLocaleString('es-AR')}%</small><div><b>${moneda(x.precio_nuevo)}</b></div></div>`).join(''):'<div class="empty">Todavía no hay aumentos aplicados.</div>';}
 
 iniciarApp();
 
