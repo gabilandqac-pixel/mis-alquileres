@@ -2323,6 +2323,57 @@ async function iniciarApp(){
 
 }
 
+
+/* ==============================
+   LIQUIDACION MENSUAL EXPENSAS
+================================ */
+let liquidacionExpActual=null;
+function fechaAR(v){if(!v)return '-';const [y,m,d]=String(v).split('-');return d&&m&&y?`${d}/${m}/${y}`:v;}
+function mesAR(v){if(!v)return '-';const [y,m]=String(v).split('-');const nombres=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];return `${nombres[Number(m)-1]||m} ${y}`;}
+async function abrirLiquidacionExpensas(){
+  if(!expUnidades.length){alert('Primero agregá al menos una unidad funcional.');return;}
+  const meses=[...new Set(expServicios.map(x=>x.mes).filter(Boolean))].sort().reverse();
+  if(!meses.length){alert('No hay servicios/impuestos cargados para liquidar.');return;}
+  const sm=document.getElementById('liqExpMes'), su=document.getElementById('liqExpUF');
+  sm.innerHTML=meses.map(m=>`<option value="${m}">${mesAR(m)}</option>`).join('');
+  const filtro=document.getElementById('expFiltroMes')?.value;
+  sm.value=meses.includes(filtro)?filtro:meses[0];
+  su.innerHTML=expUnidades.map(u=>`<option value="${u.id}">${esc(u.nombre)}</option>`).join('');
+  const selUF=Number(document.getElementById('selectorUF')?.value||0);
+  if(selUF&&expUnidades.some(u=>Number(u.id)===selUF))su.value=String(selUF);
+  abrir('modalLiquidacionExp');
+  await generarLiquidacionExp();
+}
+async function generarLiquidacionExp(){
+  const mes=document.getElementById('liqExpMes')?.value;
+  const ufId=Number(document.getElementById('liqExpUF')?.value||0);
+  const c=document.getElementById('liqExpContenido');
+  if(!mes||!ufId){c.innerHTML='<div class="empty">Elegí mes y unidad funcional.</div>';liquidacionExpActual=null;return;}
+  const uf=expUnidades.find(x=>Number(x.id)===ufId);
+  const prop=expPropiedades.find(x=>Number(x.id)===Number(expPropSeleccionada));
+  const servicios=expServicios.filter(x=>x.mes===mes);
+  const ids=servicios.map(x=>x.id);
+  let dist=[];
+  if(ids.length){const r=await db.from('exp_distribuciones').select('servicio_id,unidad_id,porcentaje').eq('unidad_id',ufId).in('servicio_id',ids);if(r.error){c.innerHTML='<div class="empty">No se pudo generar la liquidación: '+esc(r.error.message)+'</div>';return;}dist=r.data||[];}
+  const filas=dist.map(d=>{const s=servicios.find(x=>Number(x.id)===Number(d.servicio_id));if(!s)return null;return {servicio:s.nombre,cuenta:s.numero_cuenta||'',valor:Number(s.valor||0),porcentaje:Number(d.porcentaje||0),importe:Number(s.valor||0)*Number(d.porcentaje||0)/100,venc1:s.primer_vencimiento,venc2:s.segundo_vencimiento};}).filter(Boolean);
+  const total=filas.reduce((a,x)=>a+x.importe,0);
+  liquidacionExpActual={mes,uf:uf?.nombre||'',propiedad:prop?.nombre||'',localidad:prop?.localidad||'',filas,total};
+  c.innerHTML=`<div class="exp-card" id="liqExpImprimible"><h2>${esc(prop?.nombre||'Propiedad')}</h2><div><strong>Liquidación de expensas:</strong> ${esc(mesAR(mes))}</div><div><strong>Unidad funcional:</strong> ${esc(uf?.nombre||'')}</div>${filas.length?`<div class="exp-table-wrap" style="margin-top:14px"><table class="exp-table"><thead><tr><th>Servicio / Impuesto</th><th>Cuenta</th><th>Valor total</th><th>% UF</th><th>Importe UF</th><th>1° venc.</th><th>2° venc.</th></tr></thead><tbody>${filas.map(x=>`<tr><td>${esc(x.servicio)}</td><td>${esc(x.cuenta)}</td><td>${moneda(x.valor)}</td><td>${x.porcentaje.toLocaleString('es-AR')}%</td><td><strong>${moneda(x.importe)}</strong></td><td>${fechaAR(x.venc1)}</td><td>${fechaAR(x.venc2)}</td></tr>`).join('')}</tbody></table></div><div class="total-box"><small>TOTAL EXPENSAS DEL MES</small><br><strong>${moneda(total)}</strong></div>`:'<div class="empty" style="margin-top:14px">Esta UF no tiene servicios/impuestos asignados en este mes.</div>'}</div>`;
+}
+function imprimirLiquidacionExp(){
+  if(!liquidacionExpActual){alert('Primero generá una liquidación.');return;}
+  const contenido=document.getElementById('liqExpImprimible')?.innerHTML;if(!contenido)return;
+  const w=window.open('','_blank','width=1000,height=750');if(!w){alert('El navegador bloqueó la ventana de impresión. Permití ventanas emergentes para este sitio.');return;}
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Liquidación de expensas</title><style>body{font-family:Arial,sans-serif;color:#111;padding:30px}h2{margin:0 0 10px}table{width:100%;border-collapse:collapse;margin-top:18px;font-size:13px}th,td{padding:9px;border-bottom:1px solid #ddd;text-align:left}th{background:#f3f5f7}.total-box{margin-top:20px;padding:16px;border:2px solid #111;font-size:18px}.total-box strong{font-size:26px}</style></head><body>${contenido}<script>window.onload=()=>window.print()<\/script></body></html>`);w.document.close();
+}
+function enviarLiquidacionWhatsApp(){
+  const l=liquidacionExpActual;if(!l){alert('Primero generá una liquidación.');return;}
+  let t=`EXPENSAS - ${l.propiedad}\nPeríodo: ${mesAR(l.mes)}\nUF: ${l.uf}\n\n`;
+  l.filas.forEach(x=>{t+=`${x.servicio}: ${moneda(x.importe)} (${x.porcentaje.toLocaleString('es-AR')}%)\n`;});
+  t+=`\nTOTAL EXPENSAS: ${moneda(l.total)}`;
+  window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank');
+}
+
 iniciarApp();
 
 </script>
