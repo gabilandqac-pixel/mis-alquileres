@@ -895,6 +895,7 @@ function mostrarAplicacion(){
 ================================ */
 
 async function cargarPropiedades(){
+  if(!document.getElementById("lista"))return;
 
   document.getElementById("lista").innerHTML =
   '<div class="loading">Cargando propiedades...</div>';
@@ -2371,6 +2372,7 @@ async function iniciarApp(){
 ================================ */
 let liquidacionExpActual=null;
 function fechaAR(v){if(!v)return '-';const [y,m,d]=String(v).split('-');return d&&m&&y?`${d}/${m}/${y}`:v;}
+function mesBonito(v){return mesAR(v);}
 function mesAR(v){if(!v)return '-';const [y,m]=String(v).split('-');const nombres=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];return `${nombres[Number(m)-1]||m} ${y}`;}
 async function abrirLiquidacionExpensas(){
   if(!expUnidades.length){alert('Primero agregá al menos una unidad funcional.');return;}
